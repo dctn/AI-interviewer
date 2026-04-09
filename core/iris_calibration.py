@@ -1,6 +1,6 @@
 class IrisCalibration:
     def __init__(self,n_samples):
-        is_calibrated = False
+        self.is_calibrated = False
         self.threshold = {}
         self.points = None
         self.n_samples = n_samples
@@ -44,16 +44,18 @@ class IrisCalibration:
             threshold_values = self.calculate_threshold()
             accuracy, report = self.calibration_accuracy()
             self.is_calibrated = True
-            return threshold_values
+            return [threshold_values, accuracy, report]
 
         labels = [label for label in self.points.keys()]
         current_point = self.points[labels[self.current_idx]]
 
 
-        if len(current_point['samples']) < self.n_sample:
+        if len(current_point['samples']) < self.n_samples:
             current_point['samples'].append((ratio,v_ratio))
+            return [current_point['point'],self.current_idx,len(current_point['samples'])]
         elif len(current_point['samples']) >= self.n_samples:
             self.current_idx += 1
+            return [current_point['point'], self.current_idx, len(current_point['samples'])]
 
 
     def ratio_mean(self,label):
@@ -107,7 +109,7 @@ class IrisCalibration:
 
                 if v_ratio > self.threshold['down_thresh']:
                     pred_direction_v = 'top'
-                elif v_ratio < self.threshold['up_thresh']:
+                elif v_ratio < self.threshold['top_thresh']:
                     pred_direction_v = 'bottom'
                 else:
                     pred_direction_v = 'center'

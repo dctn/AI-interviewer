@@ -26,6 +26,8 @@ detector = vision.FaceLandmarker.create_from_options(options)
 class ChatConsumer(AsyncWebsocketConsumer):
 
     async def connect(self):
+        self.calibration = IrisCalibration(3)
+
         await self.accept()
         print("Connected!")
 
@@ -38,9 +40,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
         np_arr = np.frombuffer(img_bytes, np.uint8)
         frame = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
 
-        calibration = IrisCalibration(5)
 
-        detect = self.detector(frame,calibration)
+        detect = self.detector(frame,self.calibration)
         #handle no face
         if not detect["face"]:
             await self.send(text_data=json.dumps({
@@ -49,14 +50,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
             }))
             return
 
-        await self.send(text_data=json.dumps({
-            "x": detect["left_iris_x"],
-            "y": detect["left_iris_y"],
-            "direction": detect["direction"],
-            "v_direction": detect["v_direction"],
-            'ratio': detect["ratio"],
-            'v_ratio': detect["v_ratio"],
-        }))
+        await self.send(text_data=json.dumps(
+            detect
+        ))
 
     async def disconnect(self, close_code):
         print("Disconnected")
@@ -88,6 +84,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         bottom = 152
 
         h, w = frame.shape[:2]
+        # print(h,w)
         left_conor = ff[outer].x
         right_conor = ff[inner].x
         left_iris_x = ff[left_iris].x
@@ -99,19 +96,20 @@ class ChatConsumer(AsyncWebsocketConsumer):
         ratio = (left_iris_x - left_conor) / ((right_conor - left_conor) + 1e-6)
         v_ratio = (left_iris_y - top_y) / ((bottom_y - top_y) + 1e-6)
 
-        threshold_values = calibration.collect(mp_image)
+        calibrated = calibration.collect(frame,ratio,v_ratio)
         if calibration.is_calibrated:
-            if ratio < 0.35:
+            threshold_value = calibrated[0]
+            if ratio <threshold_value['left_thresh']:
                 direction = "left"
             elif ratio > 0.55:
-                direction = "right"
+                direction = threshold_value['right_thresh']
             else:
                 direction = "center"
 
             if v_ratio < 0.285:
-                v_direction = "up"
+                v_direction = threshold_value['top_thresh']
             elif v_ratio > 0.31:
-                v_direction = "down"
+                v_direction = threshold_value['down_thresh']
             else:
                 v_direction = "center"
 
@@ -123,6 +121,19 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 "v_ratio": float(v_ratio),
                 'left_iris_x': float(left_iris_x),
                 'left_iris_y': float(left_iris_y),
+                'calibrating': False,
+                'accuracy': calibrated[1],
+                'label_report': calibrated[2]
             }
 
+        else:
+            x, y = calibrated[0]
 
+            return {
+                "face": True,
+                "calibrating": True,
+                "point_x": x / w,
+                "point_y": y / h,
+                'label_idx': calibrated[1],
+                'label_sample_collect': calibrated[2]
+            }

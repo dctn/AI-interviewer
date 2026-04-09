@@ -8,94 +8,142 @@
 <video id="video" autoplay style="display:none;"></video>
 <canvas id="canvas" style="transform: scaleX(-1);"></canvas>
 <h3 id="status">Waiting...</h3>
+<h3 id="sample_collected">Waiting...</h3>
+
 <script>
-    const socket = new WebSocket("ws://127.0.0.1:8000/ws/chat/");
+ const socket = new WebSocket("ws://127.0.0.1:8000/ws/chat/");
 
-    const video = document.getElementById("video");
-    const canvas = document.getElementById("canvas");
-    const ctx = canvas.getContext("2d");
-    const statusText = document.getElementById("status");
+const video = document.getElementById("video");
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+const statusText = document.getElementById("status");
+const sample_collected = document.getElementById('sample_collected')
+// 🎯 Iris tracking
+let irisX = null;
+let irisY = null;
 
-    // store iris position
-    let irisX = null;
-    let irisY = null;
+// 🎯 Calibration
+let calibX = null;
+let calibY = null;
+let isCalibrating = false;
+let currentLabel = "";
 
-    // 🎥 Start webcam
-    navigator.mediaDevices.getUserMedia({video: true})
-        .then(stream => {
-            video.srcObject = stream;
-        });
+// 🎥 Start webcam
+navigator.mediaDevices.getUserMedia({ video: true })
+    .then(stream => {
+        video.srcObject = stream;
+    })
+    .catch(err => {
+        console.error("Camera error:", err);
+    });
 
-    // 📤 Send frame to backend
-    function sendFrame() {
-        const tempCanvas = document.createElement("canvas");
+// 📤 Send frame to backend
+function sendFrame() {
+    if (video.videoWidth === 0) return;
 
-        tempCanvas.width = window.innerWidth;
-        tempCanvas.height = window.innerHeight;
+    const tempCanvas = document.createElement("canvas");
+    tempCanvas.width = video.videoWidth;
+    tempCanvas.height = video.videoHeight;
 
+    const tempCtx = tempCanvas.getContext("2d");
 
-        const tempCtx = tempCanvas.getContext("2d");
+    // mirror (optional)
+    {#tempCtx.translate(tempCanvas.width, 0);#}
+    {#tempCtx.scale(-1, 1);#}
 
-        {#tempCtx.translate(tempCanvas.width, 0);#}
-        {#tempCtx.scale(-1, 1);#}
+    tempCtx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
 
-        tempCtx.drawImage(video, 0, 0, window.innerWidth, window.innerHeight);
+    const frame = tempCanvas.toDataURL("image/jpeg", 0.7);
 
-        const frame = tempCanvas.toDataURL("image/jpeg");
+    socket.send(JSON.stringify({
+        frame: frame
+    }));
+}
 
-        socket.send(JSON.stringify({
-            frame: frame
-        }));
+// ⏱ Send every 200ms (better than 500ms)
+setInterval(sendFrame, 200);
+
+// 📩 Receive backend data
+socket.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+
+    // ❌ No face
+    if (!data.face) {
+        statusText.innerText = "❌ No face detected";
+        return;
     }
 
-    // send every 500ms (better)
-    setInterval(sendFrame, 500);
+    // 🧪 Calibration mode
+    if (data.calibrating) {
+        const points = ['center','left','right','top','downs']
+        isCalibrating = true;
+        calibX = data.point_x;
+        calibY = data.point_y;
+        currentLabel = points[data.label_idx];
 
+        statusText.innerText = `👀 Look at ${currentLabel}`;
+        sample_collected.innerText = data.label_sample_collect
+        return;
+    }
 
-    // 📩 Receive iris position from backend
-    socket.onmessage = (event) => {
-        const data = JSON.parse(event.data);
+    // 🎯 Prediction mode
+    isCalibrating = false;
+    {#console.log(`accuracy ${data.accuracy}, `,data.label_report)#}
 
-        if (data.direction !== 'center' || data.v_direction !== 'center'){
-            console.log(data.direction,data.v_direction)
-        }
+    irisX = data.left_iris_x;
+    irisY = data.left_iris_y;
 
-        if (data.x !== null && data.y !== null) {
-            irisX = data.x;
-            irisY = data.y;
+    statusText.innerText =
+        `H: ${data.direction} (${data.ratio?.toFixed(2)}) | ` +
+        `V: ${data.v_direction} (${data.v_ratio?.toFixed(2)})`;
+};
 
-            // 🎯 Show direction
-            statusText.innerText = `H: ${data.direction} ${data.ratio} | V: ${data.v_direction} ${data.v_ratio}`;
-        } else {
-            statusText.innerText = "❌ No face detected";
-        }
-
-    };
-
-
-    // 🎨 Draw video + overlay
-    function draw() {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-
-        // draw video
-        ctx.drawImage(video, 0, 0);
-
-        // draw iris circle
-        if (irisX !== null && irisY !== null) {
-            const x = irisX * canvas.width;
-            const y = irisY * canvas.height;
-
-            ctx.beginPath();
-            ctx.arc(x, y, 6, 0, 2 * Math.PI);
-            ctx.fillStyle = "red";
-            ctx.fill();
-        }
-
+// 🎨 Draw loop
+function draw() {
+    if (video.videoWidth === 0) {
         requestAnimationFrame(draw);
+        return;
     }
 
-    draw();
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    // mirror canvas
+    ctx.save();
+    {#ctx.translate(canvas.width, 0);#}
+    {#ctx.scale(-1, 1);#}
+
+    // 🎥 draw video
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    // 🔵 Calibration point
+    if (isCalibrating && calibX !== null && calibY !== null) {
+        const x = calibX * canvas.width;
+        const y = calibY * canvas.height;
+
+        ctx.beginPath();
+        ctx.arc(x, y, 12, 0, 2 * Math.PI);
+        ctx.fillStyle = "blue";
+        ctx.fill();
+    }
+
+    // 🔴 Iris point
+    if (isCalibrating==false&& irisX !== null && irisY !== null) {
+        const x = (irisX) * canvas.width;
+        const y = irisY * canvas.height;
+
+        ctx.beginPath();
+        ctx.arc(x, y, 6, 0, 2 * Math.PI);
+        ctx.fillStyle = "red";
+        ctx.fill();
+    }
+
+    ctx.restore();
+
+    requestAnimationFrame(draw);
+}
+
+draw();
 </script>
 </body>
 </html>
