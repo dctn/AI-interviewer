@@ -10,6 +10,7 @@ from django.conf import settings
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 import mediapipe as mp
+from core.iris_calibration import IrisCalibration
 
 model_path = os.path.join(settings.BASE_DIR, "core", "face_landmarker.task")
 base_options = python.BaseOptions(model_asset_path=model_path)
@@ -37,7 +38,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
         np_arr = np.frombuffer(img_bytes, np.uint8)
         frame = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
 
-        detect = self.detector(frame)
+        calibration = IrisCalibration(5)
+
+        detect = self.detector(frame,calibration)
         #handle no face
         if not detect["face"]:
             await self.send(text_data=json.dumps({
@@ -58,7 +61,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def disconnect(self, close_code):
         print("Disconnected")
 
-    def detector(self, frame):
+    def detector(self, frame,calibration):
 
         # Convert OpenCV frame → RGB
         rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -67,6 +70,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             image_format=mp.ImageFormat.SRGB,
             data=rgb_frame
         )
+
 
         result = detector.detect(mp_image)
 
@@ -84,7 +88,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         bottom = 152
 
         h, w = frame.shape[:2]
-
         left_conor = ff[outer].x
         right_conor = ff[inner].x
         left_iris_x = ff[left_iris].x
@@ -96,26 +99,30 @@ class ChatConsumer(AsyncWebsocketConsumer):
         ratio = (left_iris_x - left_conor) / ((right_conor - left_conor) + 1e-6)
         v_ratio = (left_iris_y - top_y) / ((bottom_y - top_y) + 1e-6)
 
-        if ratio < 0.35:
-            direction = "left"
-        elif ratio > 0.55:
-            direction = "right"
-        else:
-            direction = "center"
+        threshold_values = calibration.collect(mp_image)
+        if calibration.is_calibrated:
+            if ratio < 0.35:
+                direction = "left"
+            elif ratio > 0.55:
+                direction = "right"
+            else:
+                direction = "center"
 
-        if v_ratio < 0.285:
-            v_direction = "up"
-        elif v_ratio > 0.31:
-            v_direction = "down"
-        else:
-            v_direction = "center"
+            if v_ratio < 0.285:
+                v_direction = "up"
+            elif v_ratio > 0.31:
+                v_direction = "down"
+            else:
+                v_direction = "center"
 
-        return {
-            "face": True,
-            "direction": direction,
-            "v_direction": v_direction,
-            "ratio": float(ratio),
-            "v_ratio": float(v_ratio),
-            'left_iris_x': float(left_iris_x),
-            'left_iris_y': float(left_iris_y),
-        }
+            return {
+                "face": True,
+                "direction": direction,
+                "v_direction": v_direction,
+                "ratio": float(ratio),
+                "v_ratio": float(v_ratio),
+                'left_iris_x': float(left_iris_x),
+                'left_iris_y': float(left_iris_y),
+            }
+
+

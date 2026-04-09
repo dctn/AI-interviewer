@@ -29,15 +29,17 @@
     // 📤 Send frame to backend
     function sendFrame() {
         const tempCanvas = document.createElement("canvas");
-        tempCanvas.width = 320;
-        tempCanvas.height = 240;
+
+        tempCanvas.width = window.innerWidth;
+        tempCanvas.height = window.innerHeight;
+
 
         const tempCtx = tempCanvas.getContext("2d");
 
         {#tempCtx.translate(tempCanvas.width, 0);#}
         {#tempCtx.scale(-1, 1);#}
 
-        tempCtx.drawImage(video, 0, 0, 320, 240);
+        tempCtx.drawImage(video, 0, 0, window.innerWidth, window.innerHeight);
 
         const frame = tempCanvas.toDataURL("image/jpeg");
 
