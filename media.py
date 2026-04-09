@@ -173,8 +173,8 @@ class IrisCalibration:
         if self.current_idx >= len(self.points):
             # TODO: calculate_threshold
             threshold_values = self.calculate_threshold()
-            self.calibration_accuracy()
-
+            accuracy,report = self.calibration_accuracy()
+            self.is_calibrated = True
             return threshold_values
 
         labels = [label for label in self.points.keys()]
@@ -214,7 +214,7 @@ class IrisCalibration:
         self.thresholds = {
             'left_thresh':  center_h - (center_h - left_h)  * (1 - buf),
             'right_thresh': center_h + (right_h - center_h) * (1 - buf),
-            'up_thresh':    center_v - (center_v - top_v)   * (1 - v_buf),
+            'top_thresh':    center_v - (center_v - top_v)   * (1 - v_buf),
             'down_thresh':  center_v + (bottom_v - center_v)   * (1 - v_buf),
         }
         # self.is_calibrated = True
@@ -226,10 +226,11 @@ class IrisCalibration:
             'left':('left','center'),
             'right':('right','center'),
             'top':('center','top'),
-            'down':('center','bottom'),
+            'bottom':('center','bottom'),
         }
         correct = 0
         label_report = {}
+        total = 0
 
         for point in self.points:
             points_samples = self.points[point]['samples']
@@ -237,7 +238,7 @@ class IrisCalibration:
             true_h,true_v = true_points[point]
             threshold_values = self.thresholds
             for ratio,v_ratio in points_samples:
-
+                total += 1
                 if ratio < threshold_values['left_thresh']:
                     pred_h = 'left'
                 elif ratio > threshold_values['right_thresh']:
@@ -248,7 +249,7 @@ class IrisCalibration:
                 if v_ratio < threshold_values['top_thresh']:
                     prev_v = 'top'
                 elif v_ratio > threshold_values['down_thresh']:
-                    prev_v = 'down'
+                    prev_v = 'bottom'
                 else:
                     prev_v = 'center'
 
@@ -256,8 +257,9 @@ class IrisCalibration:
                     label_correct += 1
 
             label_report[point] = label_correct
+            correct += label_correct
 
-        accuracy = (correct / self.n_sample) * 100
+        accuracy = (correct / total) * 100
         print(f'accuracy {accuracy}%')
         print(label_report)
         return accuracy, label_report
