@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Resume Analysis & Interview Question Generator</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: #f4f7fb;
+      color: #222;
+    }
+
+    .container {
+      max-width: 1150px;
+      margin: 30px auto;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 25px;
+      color: #1a2a44;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+      margin-bottom: 20px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .full-width {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+      color: #2b3d5b;
+    }
+
+    input, textarea, select, button {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid #cfd8e3;
+      font-size: 14px;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 120px;
+    }
+
+    button {
+      background: #2563eb;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      background: #1d4ed8;
+    }
+
+    button:disabled {
+      background: #94a3b8;
+      cursor: not-allowed;
+    }
+
+    .loading {
+      display: none;
+      margin-top: 15px;
+      padding: 12px;
+      border-radius: 10px;
+      background: #e0edff;
+      color: #1d4ed8;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    .error {
+      display: none;
+      margin-top: 15px;
+      padding: 12px;
+      border-radius: 10px;
+      background: #ffe3e3;
+      color: #c92a2a;
+      font-weight: bold;
+    }
+
+    .result-section {
+      display: none;
+    }
+
+    .analysis-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .info-box {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 14px;
+    }
+
+    .info-box h3 {
+      margin-top: 0;
+      color: #1e3a5f;
+      font-size: 16px;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chip {
+      background: #dbeafe;
+      color: #1d4ed8;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 13px;
+    }
+
+    .question-card {
+      background: #f8fbff;
+      border: 1px solid #dbeafe;
+      border-radius: 14px;
+      padding: 20px;
+      margin-top: 15px;
+    }
+
+    .question-number {
+      font-size: 14px;
+      color: #2563eb;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    .question-text {
+      font-size: 21px;
+      line-height: 1.5;
+      font-weight: bold;
+      color: #1f2937;
+      margin-bottom: 16px;
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .meta span {
+      background: #eef2ff;
+      color: #3730a3;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: bold;
+    }
+
+    .points-list {
+      margin: 0;
+      padding-left: 18px;
+    }
+
+    .points-list li {
+      margin-bottom: 8px;
+    }
+
+    .question-actions {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+
+    .secondary-btn {
+      background: #64748b;
+    }
+
+    .secondary-btn:hover {
+      background: #475569;
+    }
+
+    .voice-btn {
+      background: #16a34a;
+    }
+
+    .voice-btn:hover {
+      background: #15803d;
+    }
+
+    .question-counter {
+      text-align: right;
+      margin-top: 10px;
+      color: #475569;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 20px;
+      color: #64748b;
+      font-weight: bold;
+    }
+
+    .timer-box {
+      margin-top: 18px;
+      padding: 16px;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 12px;
+    }
+
+    .timer-label {
+      font-size: 14px;
+      color: #1d4ed8;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    .timer-value {
+      font-size: 28px;
+      font-weight: bold;
+      color: #1e293b;
+      margin-bottom: 10px;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 12px;
+      background: #dbeafe;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 100%;
+      background: #2563eb;
+      transition: width 1s linear;
+    }
+
+    .audio-status {
+      margin-top: 12px;
+      font-size: 14px;
+      font-weight: bold;
+      color: #0f766e;
+    }
+
+    .warning-text {
+      color: #dc2626;
+      font-weight: bold;
+      margin-top: 8px;
+    }
+
+    .transcript-box {
+      margin-top: 20px;
+      padding: 16px;
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+    }
+
+    .transcript-box h3 {
+      margin-top: 0;
+      margin-bottom: 10px;
+      color: #1e3a5f;
+    }
+
+    .transcript-content {
+      min-height: 80px;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 12px;
+      line-height: 1.6;
+      color: #334155;
+    }
+
+    .mic-status {
+      margin-top: 10px;
+      font-size: 14px;
+      font-weight: bold;
+      color: #9333ea;
+    }
+
+    @media (max-width: 768px) {
+      .form-grid,
+      .analysis-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .question-actions {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>AI Resume Analysis & Interview Question Generator</h1>
+
+    <div class="card">
+      <form id="uploadForm">
+        <div class="form-grid">
+          <div class="full-width">
+            <label for="resume">Upload Resume (PDF)</label>
+            <input type="file" id="resume" accept=".pdf" required />
+          </div>
+
+          <div>
+            <label for="role">Role</label>
+            <input type="text" id="role" placeholder="e.g. Backend Developer" required />
+          </div>
+
+          <div>
+            <label for="questionCount">Question Count</label>
+            <input type="number" id="questionCount" min="1" max="10" value="5" required />
+          </div>
+
+          <div class="full-width">
+            <label for="jobDescription">Job Description</label>
+            <textarea id="jobDescription" placeholder="Paste the job description here..." required></textarea>
+          </div>
+
+          <div>
+            <label for="difficulty">Difficulty</label>
+            <select id="difficulty">
+              <option value="easy">Easy</option>
+              <option value="medium" selected>Medium</option>
+              <option value="hard">Hard</option>
+            </select>
+          </div>
+
+          <div style="display:flex;align-items:end;">
+            <button type="submit">Analyze Resume & Generate Questions</button>
+          </div>
+        </div>
+
+        <div class="loading" id="loadingBox">Processing resume and generating questions... Please wait...</div>
+        <div class="error" id="errorBox"></div>
+      </form>
+    </div>
+
+    <div class="result-section" id="resultSection">
+      <div class="card">
+        <h2>Resume Analysis</h2>
+        <div class="analysis-grid">
+          <div class="info-box">
+            <h3>Basic Details</h3>
+            <p><strong>Name:</strong> <span id="candidateName">-</span></p>
+            <p><strong>Email:</strong> <span id="candidateEmail">-</span></p>
+            <p><strong>Phone:</strong> <span id="candidatePhone">-</span></p>
+          </div>
+
+          <div class="info-box">
+            <h3>Summary</h3>
+            <p id="candidateSummary">-</p>
+          </div>
+
+          <div class="info-box">
+            <h3>Skills</h3>
+            <div class="chips" id="skillsContainer"></div>
+          </div>
+
+          <div class="info-box">
+            <h3>Projects</h3>
+            <ul id="projectsContainer"></ul>
+          </div>
+
+          <div class="info-box">
+            <h3>Education</h3>
+            <ul id="educationContainer"></ul>
+          </div>
+
+          <div class="info-box">
+            <h3>Experience</h3>
+            <ul id="experienceContainer"></ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Generated Questions</h2>
+        <div id="questionDisplay" class="question-card">
+          <div class="empty-state">No questions to display.</div>
+        </div>
+
+        <div class="timer-box">
+          <div class="timer-label">Question Timer</div>
+          <div class="timer-value" id="timerValue">00:00</div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+          <div class="audio-status" id="audioStatus">Play voice to hear the question.</div>
+          <div class="warning-text" id="timerWarning"></div>
+          <div class="mic-status" id="micStatus">Microphone is idle.</div>
+        </div>
+
+        <div class="transcript-box">
+          <h3>Candidate Transcript</h3>
+          <div class="transcript-content" id="transcriptContent">Transcript will appear here after recording and speech-to-text conversion.</div>
+        </div>
+
+        <div class="question-counter" id="questionCounter"></div>
+
+        <div class="question-actions">
+          <button type="button" class="secondary-btn" id="prevBtn">Previous Question</button>
+          <button type="button" class="voice-btn" id="playVoiceBtn">Play Voice</button>
+          <button type="button" id="nextBtn">Next Question</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById("uploadForm");
+    const loadingBox = document.getElementById("loadingBox");
+    const errorBox = document.getElementById("errorBox");
+    const resultSection = document.getElementById("resultSection");
+
+    const candidateName = document.getElementById("candidateName");
+    const candidateEmail = document.getElementById("candidateEmail");
+    const candidatePhone = document.getElementById("candidatePhone");
+    const candidateSummary = document.getElementById("candidateSummary");
+
+    const skillsContainer = document.getElementById("skillsContainer");
+    const projectsContainer = document.getElementById("projectsContainer");
+    const educationContainer = document.getElementById("educationContainer");
+    const experienceContainer = document.getElementById("experienceContainer");
+
+    const questionDisplay = document.getElementById("questionDisplay");
+    const questionCounter = document.getElementById("questionCounter");
+    const prevBtn = document.getElementById("prevBtn");
+    const nextBtn = document.getElementById("nextBtn");
+    const playVoiceBtn = document.getElementById("playVoiceBtn");
+
+    const timerValue = document.getElementById("timerValue");
+    const progressFill = document.getElementById("progressFill");
+    const audioStatus = document.getElementById("audioStatus");
+    const timerWarning = document.getElementById("timerWarning");
+    const transcriptContent = document.getElementById("transcriptContent");
+    const micStatus = document.getElementById("micStatus");
+
+    let questions = [];
+    let currentQuestionIndex = 0;
+    let currentAudio = null;
+    let timerInterval = null;
+    let timeLeft = 0;
+    let totalTime = 0;
+
+    let mediaRecorder = null;
+    let mediaStream = null;
+    let audioChunks = [];
+    let answerStore = {};
+
+    function showError(message) {
+      errorBox.style.display = "block";
+      errorBox.textContent = message;
+    }
+
+    function clearError() {
+      errorBox.style.display = "none";
+      errorBox.textContent = "";
+    }
+
+    function setLoading(isLoading) {
+      loadingBox.style.display = isLoading ? "block" : "none";
+    }
+
+    function renderList(container, items) {
+      container.innerHTML = "";
+      if (!items || items.length === 0) {
+        container.innerHTML = "<li>No data found</li>";
+        return;
+      }
+
+      items.forEach(item => {
+        const li = document.createElement("li");
+        li.textContent = item;
+        container.appendChild(li);
+      });
+    }
+
+    function renderSkills(skills) {
+      skillsContainer.innerHTML = "";
+      if (!skills || skills.length === 0) {
+        skillsContainer.innerHTML = "<span>No skills found</span>";
+        return;
+      }
+
+      skills.forEach(skill => {
+        const chip = document.createElement("span");
+        chip.className = "chip";
+        chip.textContent = skill;
+        skillsContainer.appendChild(chip);
+      });
+    }
+
+    function renderResumeAnalysis(data) {
+      candidateName.textContent = data.name || "-";
+      candidateEmail.textContent = data.email || "-";
+      candidatePhone.textContent = data.phone || "-";
+      candidateSummary.textContent = data.summary || "-";
+
+      renderSkills(data.skills || []);
+      renderList(projectsContainer, data.projects || []);
+      renderList(educationContainer, data.education || []);
+      renderList(experienceContainer, data.experience || []);
+    }
+
+    function stopCurrentAudio() {
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        currentAudio = null;
+      }
+    }
+
+    function stopTimer() {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+    }
+
+    function stopRecordingIfActive() {
+      if (mediaRecorder && mediaRecorder.state === "recording") {
+        mediaRecorder.stop();
+      }
+    }
+
+    function stopMicTracks() {
+      if (mediaStream) {
+        mediaStream.getTracks().forEach(track => track.stop());
+        mediaStream = null;
+      }
+    }
+
+    function resetTimerDisplay(seconds = 0) {
+      const mins = String(Math.floor(seconds / 60)).padStart(2, "0");
+      const secs = String(seconds % 60).padStart(2, "0");
+      timerValue.textContent = `${mins}:${secs}`;
+      progressFill.style.width = seconds > 0 ? "100%" : "0%";
+      timerWarning.textContent = "";
+    }
+
+    function getCurrentQuestionKey() {
+      if (!questions.length) return null;
+      return `question_${questions[currentQuestionIndex].question_no}`;
+    }
+
+    function renderStoredTranscript() {
+      const key = getCurrentQuestionKey();
+      transcriptContent.textContent = answerStore[key]?.transcript || "Transcript will appear here after recording and speech-to-text conversion.";
+    }
+
+    async function startMicRecording() {
+      try {
+        audioChunks = [];
+        mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(mediaStream);
+
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            audioChunks.push(event.data);
+          }
+        };
+
+        mediaRecorder.onstart = () => {
+          micStatus.textContent = "Microphone is recording candidate answer...";
+        };
+
+        mediaRecorder.onstop = async () => {
+          micStatus.textContent = "Recording stopped. Sending audio for transcription...";
+
+          const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+          const key = getCurrentQuestionKey();
+
+          if (key) {
+            answerStore[key] = {
+              ...(answerStore[key] || {}),
+              audioBlob
+            };
+          }
+
+          await sendAudioToSTT(audioBlob);
+          stopMicTracks();
+        };
+
+        mediaRecorder.start();
+      } catch (error) {
+        micStatus.textContent = "Microphone access failed.";
+        showError("Microphone permission denied or unsupported.");
+      }
+    }
+
+    async function sendAudioToSTT(audioBlob) {
+      try {
+        const formData = new FormData();
+        formData.append("file", audioBlob, "candidate_answer.webm");
+
+        const response = await fetch("http://127.0.0.1:8003/transcribe-audio", {
+          method: "POST",
+          body: formData
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.detail || "STT transcription failed");
+        }
+
+        const key = getCurrentQuestionKey();
+        if (key) {
+          answerStore[key] = {
+            ...(answerStore[key] || {}),
+            transcript: data.transcript
+          };
+        }
+
+        transcriptContent.textContent = data.transcript || "No transcript found.";
+        micStatus.textContent = "Transcription completed successfully.";
+      } catch (error) {
+        transcriptContent.textContent = "Transcript generation failed.";
+        micStatus.textContent = "Speech-to-text failed.";
+        showError(error.message || "Failed to transcribe audio.");
+      }
+    }
+
+    function startTimer(duration) {
+      stopTimer();
+
+      totalTime = duration;
+      timeLeft = duration;
+
+      resetTimerDisplay(duration);
+      audioStatus.textContent = "Audio finished. Timer started.";
+      micStatus.textContent = "Microphone is now active for candidate response.";
+
+      startMicRecording();
+
+      timerInterval = setInterval(() => {
+        timeLeft--;
+
+        const mins = String(Math.floor(timeLeft / 60)).padStart(2, "0");
+        const secs = String(timeLeft % 60).padStart(2, "0");
+        timerValue.textContent = `${mins}:${secs}`;
+
+        const percentage = (timeLeft / totalTime) * 100;
+        progressFill.style.width = `${percentage}%`;
+
+        if (timeLeft <= 10 && timeLeft > 0) {
+          timerWarning.textContent = `Only ${timeLeft} seconds left!`;
+        }
+
+        if (timeLeft <= 0) {
+          stopTimer();
+          timerValue.textContent = "00:00";
+          progressFill.style.width = "0%";
+          timerWarning.textContent = "Time is up! Processing recorded answer...";
+
+          stopRecordingIfActive();
+
+          setTimeout(() => {
+            if (currentQuestionIndex < questions.length - 1) {
+              currentQuestionIndex++;
+              renderQuestion(currentQuestionIndex);
+            } else {
+              timerWarning.textContent = "All questions completed.";
+              micStatus.textContent = "Interview question flow completed.";
+            }
+          }, 2000);
+        }
+      }, 1000);
+    }
+
+    function renderQuestion(index) {
+      stopCurrentAudio();
+      stopTimer();
+      stopRecordingIfActive();
+      stopMicTracks();
+
+      if (!questions.length) {
+        questionDisplay.innerHTML = `<div class="empty-state">No questions generated.</div>`;
+        questionCounter.textContent = "";
+        resetTimerDisplay(0);
+        audioStatus.textContent = "No audio loaded.";
+        transcriptContent.textContent = "Transcript will appear here after recording and speech-to-text conversion.";
+        micStatus.textContent = "Microphone is idle.";
+        return;
+      }
+
+      const q = questions[index];
+
+      questionDisplay.innerHTML = `
+        <div class="question-number">Question ${q.question_no}</div>
+        <div class="question-text">${q.question}</div>
+
+        <div class="meta">
+          <span>Topic: ${q.topic || "-"}</span>
+          <span>Difficulty: ${q.difficulty || "-"}</span>
+          <span>Category: ${q.category || "-"}</span>
+          <span>Time: ${q.time_limit_sec || "-"} sec</span>
+        </div>
+
+        <h3>Expected Points</h3>
+        <ul class="points-list">
+          ${(q.expected_points || []).map(point => `<li>${point}</li>`).join("")}
+        </ul>
+
+        <h3 style="margin-top:18px;">Resume Reference</h3>
+        <p>${q.resume_reference?.snippet || "No resume reference available"}</p>
+
+        <h3 style="margin-top:18px;">JD Reference</h3>
+        <p>${q.jd_reference?.snippet || "No job description reference available"}</p>
+      `;
+
+      questionCounter.textContent = `Showing question ${index + 1} of ${questions.length}`;
+
+      prevBtn.disabled = index === 0;
+      nextBtn.disabled = index === questions.length - 1;
+
+      resetTimerDisplay(q.time_limit_sec || 0);
+      audioStatus.textContent = "Play voice to hear the question.";
+      timerWarning.textContent = "";
+      micStatus.textContent = "Microphone is idle.";
+      renderStoredTranscript();
+    }
+
+    async function playQuestionVoice() {
+      if (!questions.length) return;
+
+      stopCurrentAudio();
+      stopTimer();
+      stopRecordingIfActive();
+      stopMicTracks();
+
+      const q = questions[currentQuestionIndex];
+      audioStatus.textContent = "Generating audio... Please wait.";
+      timerWarning.textContent = "";
+      playVoiceBtn.disabled = true;
+      micStatus.textContent = "Microphone is idle until audio finishes.";
+
+      try {
+        const response = await fetch("http://127.0.0.1:8002/generate-audio", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            text: q.question,
+            voice: "default",
+            file_name: `question_${q.question_no}`
+          })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.detail || "Failed to generate audio");
+        }
+
+        currentAudio = new Audio(data.audio_url);
+
+        currentAudio.onplay = () => {
+          audioStatus.textContent = "Audio is playing...";
+        };
+
+        currentAudio.onended = () => {
+          audioStatus.textContent = "Audio completed.";
+          startTimer(q.time_limit_sec || 90);
+        };
+
+        currentAudio.onerror = () => {
+          audioStatus.textContent = "Failed to play audio.";
+          showError("Audio playback failed.");
+        };
+
+        await currentAudio.play();
+      } catch (error) {
+        showError(error.message || "Voice playback failed.");
+        audioStatus.textContent = "Voice generation failed.";
+      } finally {
+        playVoiceBtn.disabled = false;
+      }
+    }
+
+    prevBtn.addEventListener("click", () => {
+      if (currentQuestionIndex > 0) {
+        currentQuestionIndex--;
+        renderQuestion(currentQuestionIndex);
+      }
+    });
+
+    nextBtn.addEventListener("click", () => {
+      if (currentQuestionIndex < questions.length - 1) {
+        currentQuestionIndex++;
+        renderQuestion(currentQuestionIndex);
+      }
+    });
+
+    playVoiceBtn.addEventListener("click", playQuestionVoice);
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      clearError();
+      setLoading(true);
+      resultSection.style.display = "none";
+      stopCurrentAudio();
+      stopTimer();
+      stopRecordingIfActive();
+      stopMicTracks();
+      answerStore = {};
+
+      const fileInput = document.getElementById("resume");
+      const role = document.getElementById("role").value.trim();
+      const jobDescription = document.getElementById("jobDescription").value.trim();
+      const questionCount = document.getElementById("questionCount").value;
+      const difficulty = document.getElementById("difficulty").value;
+
+      if (!fileInput.files.length) {
+        setLoading(false);
+        showError("Please upload a resume PDF.");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("file", fileInput.files[0]);
+      formData.append("role", role);
+      formData.append("job_description", jobDescription);
+      formData.append("question_count", questionCount);
+      formData.append("difficulty", difficulty);
+
+      try {
+        const response = await fetch("http://127.0.0.1:8001/analyze-and-generate-questions", {
+          method: "POST",
+          body: formData
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.detail || "Something went wrong");
+        }
+
+        renderResumeAnalysis(data.resume_analysis);
+
+        questions = data.generated_questions?.questions || [];
+        currentQuestionIndex = 0;
+        renderQuestion(currentQuestionIndex);
+
+        resultSection.style.display = "block";
+      } catch (error) {
+        showError(error.message || "Failed to process request.");
+      } finally {
+        setLoading(false);
+      }
+    });
+  </script>
+</body>
+</html>
