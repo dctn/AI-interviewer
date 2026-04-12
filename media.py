@@ -106,13 +106,18 @@ ratios = []
 
 generate_random_color()
 
+
+smooth_ratio   = 0.5
+smooth_v_ratio = 0.5
+ALPHA = 0.25
+DEAD = 0.03
+
 # %%
 """
 # calibration technique
 - collect sample ratio,v_ratio in each direction or label
 - avg both ratios
 - calculate threshold value for each direction with defind formula
-![formula](threshold_formula_explained.svg)
 
 ```
 center_h = 0.50   (where your iris sits looking straight)
@@ -124,6 +129,36 @@ threshold = 0.50 - (0.30 * 0.95)
           = 0.50 - 0.285
           = 0.215
 ```
+
+## (plan changed bcs of low accuracy)
+- calculate ratio threshold value by percentile of each sample
+```
+left samples  → find where they END   (85th percentile)
+center samples → find where they START (15th percentile)
+
+threshold = (left's end + center's start) / 2
+          = midpoint of the gap between them
+
+center samples: [0.45, 0.46, 0.47, 0.50, 0.51]
+left samples:   [0.18, 0.19, 0.20, 0.22, 0.30]
+
+left's 85th percentile   = 0.28   ← where left dist ends
+center's 15th percentile = 0.46   ← where center dist starts
+
+left_thresh = (0.28 + 0.46) / 2
+            = 0.74 / 2
+            = 0.37
+
+LEFT dist ends here
+        ↓
+[0.18..0.28]        [0.46..0.51]
+              ↑  ↑
+           gap  center starts here
+              ↑
+           0.37  ← threshold sits in the middle of the gap
+```
+
+
 """
 
 # %%
@@ -134,7 +169,7 @@ class IrisCalibration:
         self.samples = {}
         self.thresholds = {}
         self.is_calibrated = False
-        self.n_sample = 5
+        self.n_sample = 50*6
         self.current_idx = 0
 
     def get_points(self,input_frame):
@@ -202,22 +237,32 @@ class IrisCalibration:
         v_ratio_avg = sum(i for _,i in data) / len(data)
         return ratio_avg, v_ratio_avg
 
-    def calculate_threshold(self):
-        center_h,center_v = self.ratio_mean('center')
-        left_h,left_v = self.ratio_mean('left')
-        right_h,right_v = self.ratio_mean('right')
-        top_h,top_v = self.ratio_mean('top')
-        bottom_h,bottom_v = self.ratio_mean('bottom')
 
-        buf = 0.05
-        v_buf = 0.30
+    def percentile(self, data, p):
+        sorted_data = sorted(data)
+        idx = (p / 100) * (len(sorted_data) - 1)
+        lo  = int(idx)
+        hi  = min(lo + 1, len(sorted_data) - 1)
+        return sorted_data[lo] + (sorted_data[hi] - sorted_data[lo]) * (idx - lo)
+
+
+    def calculate_threshold(self):
+        left_h   = [r for r, _ in self.points['left']['samples']]
+        right_h  = [r for r, _ in self.points['right']['samples']]
+        center_h = [r for r, _ in self.points['center']['samples']]
+        top_v    = [v for _, v in self.points['top']['samples']]
+        bottom_v = [v for _, v in self.points['bottom']['samples']]
+        center_v = [v for _, v in self.points['center']['samples']]
+
+
+
+
         self.thresholds = {
-            'left_thresh':  center_h - (center_h - left_h)  * (1 - buf),
-            'right_thresh': center_h + (right_h - center_h) * (1 - buf),
-            'top_thresh':    center_v - (center_v - top_v)   * (1 - v_buf),
-            'down_thresh':  center_v + (bottom_v - center_v)   * (1 - v_buf),
+            'left_thresh':  (self.percentile(left_h,   85) + self.percentile(center_h, 15)) / 2,
+            'right_thresh': (self.percentile(center_h, 85) + self.percentile(right_h,  15)) / 2,
+            'top_thresh':   (self.percentile(top_v,    85) + self.percentile(center_v, 15)) / 2,
+            'down_thresh':  (self.percentile(center_v, 85) + self.percentile(bottom_v, 15)) / 2,
         }
-        # self.is_calibrated = True
         return self.thresholds
 
     def calibration_accuracy(self):
@@ -239,6 +284,7 @@ class IrisCalibration:
             threshold_values = self.thresholds
             for ratio,v_ratio in points_samples:
                 total += 1
+
                 if ratio < threshold_values['left_thresh']:
                     pred_h = 'left'
                 elif ratio > threshold_values['right_thresh']:
@@ -275,6 +321,7 @@ class IrisCalibration:
 cam = cv2.VideoCapture(0)
 
 calibration = IrisCalibration()
+threshold_values = None
 
 while cam:
     try:
@@ -283,6 +330,7 @@ while cam:
         frame = cv2.flip(frame, 1)
 
         rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
 
         result = detector.detect(mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_frame))
 
@@ -300,31 +348,42 @@ while cam:
             ratio = (left_iris_post - left_conor) / ((right_conor - left_conor)  + 1e-6)
             v_ratio = (v_left_iris_post - top_iris_post) / (bottom_iris_post - top_iris_post + 1e-6)
 
-            calibration_values = calibration.collect(frame,ratio,v_ratio)
+            smooth_ratio   = ALPHA * ratio   + (1 - ALPHA) * smooth_ratio
+            smooth_v_ratio = ALPHA * v_ratio + (1 - ALPHA) * smooth_v_ratio
 
-            if calibration.is_calibrated:
-                if ratio < calibration_values['left_thresh']:
+            calibration_values = calibration.collect(frame,smooth_ratio,smooth_v_ratio)
+
+            if calibration_values is not None:
+                threshold_values = calibration_values
+
+            if calibration.is_calibrated and threshold_values is not None:
+
+                if smooth_ratio < threshold_values['left_thresh'] - DEAD:
                     direction = 'left'
-                elif ratio > calibration_values['right_thresh']:
+                elif smooth_ratio > threshold_values['right_thresh'] + DEAD:
                     direction = 'right'
-                else:
+                elif threshold_values['left_thresh'] + DEAD < smooth_ratio < threshold_values['right_thresh'] - DEAD:
                     direction = 'center'
-
-                if v_ratio < calibration_values['up_thresh']:
-                    v_direction = 'up'
-                elif v_ratio > 0.31:
-                    v_direction = 'down'
                 else:
-                    v_direction = 'center'
+                    direction = None   # ambiguous — skip this frame
 
+                if smooth_v_ratio < threshold_values['top_thresh'] - DEAD:
+                    v_direction = 'up'
+                elif smooth_v_ratio > threshold_values['down_thresh'] + DEAD:
+                    v_direction = 'down'
+                elif threshold_values['top_thresh'] + DEAD < smooth_v_ratio < threshold_values['down_thresh'] - DEAD:
+                    v_direction = 'center'
+                else:
+                    v_direction = None
 
                 cv2.putText(frame, f"{direction}--{v_direction}: ", (30, 40), cv2.FONT_ITALIC,1, (0,0,255), 2)
                 cv2.putText(frame, f"{round(ratio,2)}--{round(v_ratio,2)}:", (30, 80), cv2.FONT_ITALIC,1, (0,0,255), 2)
 
 
                 if direction != 'center' or v_direction != 'center':
-                    logger((direction, v_direction),(ratio,v_ratio))
-                    cv2.putText(frame, 'cheating pannada loosu kuthi', (w//2,h//2), cv2.FONT_ITALIC,1, (0,0,255), 2)
+                    # logger((direction, v_direction),(ratio,v_ratio))
+                    cv2.putText(frame, 'cheating pannada loosu cutie', (w//2,h//2), cv2.FONT_ITALIC,1, (0,0,255), 2)
+
                 for face_landmarks in [left_iris, top, bottom, inner, outer]:
                     cv2.circle(frame, (int(ff[face_landmarks].x*w), int(ff[face_landmarks].y*h)), 5, generate_random_color(), -1)
 
