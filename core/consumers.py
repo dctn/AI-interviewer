@@ -26,7 +26,7 @@ detector = vision.FaceLandmarker.create_from_options(options)
 class ChatConsumer(AsyncWebsocketConsumer):
 
     async def connect(self):
-        self.calibration = IrisCalibration(3)
+        self.calibration = IrisCalibration(50)
 
         await self.accept()
         print("Connected!")
@@ -106,10 +106,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
             else:
                 direction = "center"
 
-            if v_ratio < 0.285:
-                v_direction = threshold_value['top_thresh']
-            elif v_ratio > 0.31:
-                v_direction = threshold_value['down_thresh']
+            if v_ratio < threshold_value['top_thresh']:
+                v_direction = 'top'
+            elif v_ratio > threshold_value['down_thresh']:
+                v_direction = 'bottom'
             else:
                 v_direction = "center"
 

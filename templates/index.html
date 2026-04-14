@@ -42,8 +42,8 @@ function sendFrame() {
     if (video.videoWidth === 0) return;
 
     const tempCanvas = document.createElement("canvas");
-    tempCanvas.width = video.videoWidth;
-    tempCanvas.height = video.videoHeight;
+    tempCanvas.width = window.innerWidth;
+    tempCanvas.height = window.innerHeight;
 
     const tempCtx = tempCanvas.getContext("2d");
 
@@ -61,7 +61,7 @@ function sendFrame() {
 }
 
 // ⏱ Send every 200ms (better than 500ms)
-setInterval(sendFrame, 200);
+setInterval(sendFrame, 10);
 
 // 📩 Receive backend data
 socket.onmessage = (event) => {
@@ -105,8 +105,9 @@ function draw() {
         return;
     }
 
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
 
     // mirror canvas
     ctx.save();
@@ -115,6 +116,7 @@ function draw() {
 
     // 🎥 draw video
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
 
     // 🔵 Calibration point
     if (isCalibrating && calibX !== null && calibY !== null) {
