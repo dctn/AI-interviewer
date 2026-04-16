@@ -3,102 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
+    <style>
+        #result{
+            color: red;
+            font-size: 5rem;
+            position: absolute;
+            top: 10px;
+            z-index: 100;
+        }
+    </style>
 </head>
 <body>
 <video id="video" autoplay style="display:none;"></video>
 <canvas id="canvas" style="transform: scaleX(-1);"></canvas>
 <h3 id="status">Waiting...</h3>
 <h3 id="sample_collected">Waiting...</h3>
-
+<p id="result">wait</p>
 <script>
- const socket = new WebSocket("ws://127.0.0.1:8000/ws/chat/");
+const socket = new WebSocket("ws://127.0.0.1:8000/ws/chat/");
 
 const video = document.getElementById("video");
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 const statusText = document.getElementById("status");
-const sample_collected = document.getElementById('sample_collected')
-// 🎯 Iris tracking
+const result = document.getElementById('result')
+
+// Iris
 let irisX = null;
 let irisY = null;
 
-// 🎯 Calibration
+// Calibration
 let calibX = null;
 let calibY = null;
 let isCalibrating = false;
-let currentLabel = "";
 
-// 🎥 Start webcam
+// Start webcam
 navigator.mediaDevices.getUserMedia({ video: true })
-    .then(stream => {
-        video.srcObject = stream;
-    })
-    .catch(err => {
-        console.error("Camera error:", err);
-    });
+.then(stream => video.srcObject = stream)
+.catch(err => console.error(err));
 
-// 📤 Send frame to backend
+// Send frame
 function sendFrame() {
     if (video.videoWidth === 0) return;
 
     const tempCanvas = document.createElement("canvas");
-    tempCanvas.width = window.innerWidth;
-    tempCanvas.height = window.innerHeight;
+    tempCanvas.width = video.videoWidth;
+    tempCanvas.height = video.videoHeight;
 
     const tempCtx = tempCanvas.getContext("2d");
-
-    // mirror (optional)
-    {#tempCtx.translate(tempCanvas.width, 0);#}
-    {#tempCtx.scale(-1, 1);#}
-
-    tempCtx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
+    tempCtx.drawImage(video, 0, 0);
 
     const frame = tempCanvas.toDataURL("image/jpeg", 0.7);
 
-    socket.send(JSON.stringify({
-        frame: frame
-    }));
+    socket.send(JSON.stringify({ frame }));
 }
 
-// ⏱ Send every 200ms (better than 500ms)
-setInterval(sendFrame, 10);
+setInterval(sendFrame, 30);
 
-// 📩 Receive backend data
+// Receive data
 socket.onmessage = (event) => {
     const data = JSON.parse(event.data);
 
-    // ❌ No face
     if (!data.face) {
-        statusText.innerText = "❌ No face detected";
+        statusText.innerText = "No face";
         return;
     }
 
-    // 🧪 Calibration mode
     if (data.calibrating) {
-        const points = ['center','left','right','top','downs']
         isCalibrating = true;
         calibX = data.point_x;
         calibY = data.point_y;
-        currentLabel = points[data.label_idx];
-
-        statusText.innerText = `👀 Look at ${currentLabel}`;
-        sample_collected.innerText = data.label_sample_collect
+        statusText.innerText = "Calibrating...";
         return;
     }
+    else{
+        result.innerText = data.is_cheating
+    }
 
-    // 🎯 Prediction mode
     isCalibrating = false;
-    {#console.log(`accuracy ${data.accuracy}, `,data.label_report)#}
-
     irisX = data.left_iris_x;
     irisY = data.left_iris_y;
-
-    statusText.innerText =
-        `H: ${data.direction} (${data.ratio?.toFixed(2)}) | ` +
-        `V: ${data.v_direction} (${data.v_ratio?.toFixed(2)})`;
 };
 
-// 🎨 Draw loop
+// Draw
 function draw() {
     if (video.videoWidth === 0) {
         requestAnimationFrame(draw);
@@ -108,18 +95,29 @@ function draw() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
+    // ===== FIT VIDEO (keep aspect ratio) =====
+    const videoRatio = video.videoWidth / video.videoHeight;
+    const canvasRatio = canvas.width / canvas.height;
 
-    // mirror canvas
-    ctx.save();
-    {#ctx.translate(canvas.width, 0);#}
-    {#ctx.scale(-1, 1);#}
+    let drawWidth, drawHeight, offsetX, offsetY;
 
-    // 🎥 draw video
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    if (videoRatio > canvasRatio) {
+        drawWidth = canvas.width;
+        drawHeight = canvas.width / videoRatio;
+        offsetX = 0;
+        offsetY = (canvas.height - drawHeight) / 2;
+    } else {
+        drawHeight = canvas.height;
+        drawWidth = canvas.height * videoRatio;
+        offsetX = (canvas.width - drawWidth) / 2;
+        offsetY = 0;
+    }
 
+    // ===== DRAW VIDEO =====
+    ctx.drawImage(video, offsetX, offsetY, drawWidth, drawHeight);
 
-    // 🔵 Calibration point
-    if (isCalibrating && calibX !== null && calibY !== null) {
+    // ===== CALIBRATION POINT =====
+    if (isCalibrating && calibX !== null) {
         const x = calibX * canvas.width;
         const y = calibY * canvas.height;
 
@@ -129,18 +127,17 @@ function draw() {
         ctx.fill();
     }
 
-    // 🔴 Iris point
-    if (isCalibrating==false&& irisX !== null && irisY !== null) {
-        const x = (irisX) * canvas.width;
-        const y = irisY * canvas.height;
+    // ===== IRIS POINT =====
+    if (!isCalibrating && irisX !== null) {
+        // map video → screen
+        const x = offsetX + (irisX * drawWidth);
+        const y = offsetY + (irisY * drawHeight);
 
         ctx.beginPath();
         ctx.arc(x, y, 6, 0, 2 * Math.PI);
         ctx.fillStyle = "red";
         ctx.fill();
     }
-
-    ctx.restore();
 
     requestAnimationFrame(draw);
 }

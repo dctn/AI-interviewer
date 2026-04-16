@@ -1,7 +1,9 @@
+from core.detection import Detection
+
 class IrisCalibration:
     def __init__(self,n_samples):
         self.is_calibrated = False
-        self.threshold = {}
+        self.thresholds = {}
         self.points = None
         self.n_samples = n_samples
         self.current_idx = 0
@@ -28,19 +30,19 @@ class IrisCalibration:
                 'samples': []
             },
             'bottom': {
-                'point': (screen_CX, screen_h - 50),
+                'point': (screen_CX, screen_h - 70),
                 'samples': []
             }
         }
 
         return points
 
-    def collect(self,input_frame,ratio,v_ratio):
+    def collect(self,input_frame,ratio,v_ratio,ear,head_pos):
         if self.points is None:
             self.points = self.get_points(input_frame)
 
         if self.current_idx >= len(self.points):
-            # TODO: calculate_threshold
+            # calculate_threshold
             threshold_values = self.calculate_threshold()
             accuracy, report = self.calibration_accuracy()
             self.is_calibrated = True
@@ -51,75 +53,79 @@ class IrisCalibration:
 
 
         if len(current_point['samples']) < self.n_samples:
-            current_point['samples'].append((ratio,v_ratio))
+            current_point['samples'].append((ratio,v_ratio,ear,head_pos))
             return [current_point['point'],self.current_idx,len(current_point['samples'])]
         elif len(current_point['samples']) >= self.n_samples:
             self.current_idx += 1
             return [current_point['point'], self.current_idx, len(current_point['samples'])]
 
+    def ratio_mean(self, label,sample='samples'):
+        data = self.points[label][sample]
+        ratio_avg = sum(label_ratio for label_ratio, _, _, _ in data) / len(data)
+        v_ratio_avg = sum(i for _, i, _, _ in data) / len(data)
 
-    def ratio_mean(self,label):
-        ratio_data = self.points[label]['samples']
-        avg_ratio = sum([i for i,_ in ratio_data]) / len(ratio_data)
-        avg_v_ratio = sum([i for _,i in ratio_data]) / len(ratio_data)
-        return avg_ratio, avg_v_ratio
+        ear_avg = sum(ear for _, _, ear, _ in data) / len(data)
+        head_pos_avg = sum(head for _, _, _, head in data) / len(data)
+        return ratio_avg, v_ratio_avg, ear_avg, head_pos_avg
 
     def calculate_threshold(self):
-        center_h, center_v = self.ratio_mean('center')
-        left_h, left_v = self.ratio_mean('left')
-        right_h, right_v = self.ratio_mean('right')
-        top_h, top_v = self.ratio_mean('top')
-        bottom_h, bottom_v = self.ratio_mean('bottom')
+        center_h,center_v,center_ear_avg,center_head_pos_avg = self.ratio_mean('center')
+        left_h,left_v,_,_ = self.ratio_mean('left')
+        right_h,right_v,_,_ = self.ratio_mean('right')
+        _,top_v,_,top_head_pos_avg = self.ratio_mean('top')
+        _,bottom_v,_,bottom_head_pos_avg = self.ratio_mean('bottom')
+
+        head_pitch_top = abs(center_head_pos_avg - top_head_pos_avg)
+        head_pitch_bottom = abs(center_head_pos_avg - bottom_head_pos_avg)
+
 
         buf = 0.05
-        v_buf = 0.30
-        self.threshold = {
-            'left_thresh': center_h - (center_h - left_h) * (1 - buf),
+        v_buf =  0.25
+        self.thresholds = {
+            'left_thresh':  center_h - (center_h - left_h)  * (1 - buf),
             'right_thresh': center_h + (right_h - center_h) * (1 - buf),
-            'top_thresh': center_v - (center_v - top_v) * (1 - v_buf),
-            'down_thresh': center_v + (bottom_v - center_v) * (1 - v_buf),
+            'top_thresh':    center_v - (center_v - top_v)   * (1 - v_buf),
+            'down_thresh':  center_v + (bottom_v - center_v)   * (1 - v_buf),
+            'ear_thresh':  center_ear_avg * 0.75,
+            'head_pos_thresh': max(head_pitch_top,head_pitch_bottom) * 0.7,
+            'center_ratio': center_h,
+            'center_v_ratio': center_v,
+            'center_head_pos': center_head_pos_avg,
+            'center_ear':center_ear_avg,
         }
         # self.is_calibrated = True
-        return self.threshold
-
+        return self.thresholds
 
     def calibration_accuracy(self):
         true_points = {
-            'center': ('center', 'center'),
-            'left': ('left', 'center'),
-            'right': ('right', 'center'),
-            'top': ('center', 'top'),
-            'bottom': ('center', 'bottom'),
+            'center':('center','center'),
+            'left':('left','center'),
+            'right':('right','center'),
+            'top':('center','top'),
+            'bottom':('center','bottom'),
         }
-
         correct = 0
-        total = 0
         label_report = {}
+        total = 0
 
-        for point in self.points.keys():
+        for point in self.points:
+            points_samples = self.points[point]['samples']
             label_correct = 0
-            for ratio,v_ratio in self.points[point]['samples']:
-
-                if ratio < self.threshold['left_thresh']:
-                    pred_direction = 'left'
-                elif ratio > self.threshold['right_thresh']:
-                    pred_direction = 'right'
-                else:
-                    pred_direction = 'center'
-
-                if v_ratio > self.threshold['down_thresh']:
-                    pred_direction_v = 'top'
-                elif v_ratio < self.threshold['top_thresh']:
-                    pred_direction_v = 'bottom'
-                else:
-                    pred_direction_v = 'center'
-
-                if pred_direction == true_points[point][0] and pred_direction_v == true_points[point][1]:
-                    label_correct += 1
+            true_h,true_v = true_points[point]
+            for ratio,v_ratio,ear,head_pos in points_samples:
                 total += 1
+
+                score = Detection.fusion_score(ratio,v_ratio,ear,head_pos,self.thresholds)
+
+                if point == 'center' and score < 0.4:
+                    label_correct += 1
+                elif point != 'center' and score >= 0.6:
+                    label_correct += 1
+
+            label_report[point] = label_correct
             correct += label_correct
-            label_report[point] = correct
-        accuracy = correct / total
+
+        accuracy = (correct / total) * 100
         print(f'accuracy {accuracy}%')
         print(label_report)
         return accuracy, label_report
