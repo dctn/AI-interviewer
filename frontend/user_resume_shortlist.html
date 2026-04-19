@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Resume Upload & Shortlisting</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: #f4f7fb;
+      color: #1e293b;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 20px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 25px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #1e3a5f;
+      margin-bottom: 25px;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+      color: #334155;
+    }
+
+    input, textarea, button {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid #cbd5e1;
+      font-size: 14px;
+    }
+
+    textarea {
+      min-height: 140px;
+      resize: vertical;
+    }
+
+    button {
+      background: #2563eb;
+      color: white;
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background: #1d4ed8;
+    }
+
+    .loading {
+      display: none;
+      margin-top: 15px;
+      padding: 12px;
+      border-radius: 10px;
+      background: #dbeafe;
+      color: #1d4ed8;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    .result-box {
+      display: none;
+      margin-top: 20px;
+      padding: 18px;
+      border-radius: 14px;
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+    }
+
+    .shortlisted {
+      border-left: 6px solid #16a34a;
+      background: #f0fdf4;
+    }
+
+    .rejected {
+      border-left: 6px solid #dc2626;
+      background: #fef2f2;
+    }
+
+    .label {
+      font-weight: bold;
+      color: #1e3a5f;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .chip {
+      background: #e2e8f0;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 13px;
+    }
+
+    .section-title {
+      margin-top: 18px;
+      margin-bottom: 10px;
+      font-size: 18px;
+      color: #1e3a5f;
+    }
+
+    .error {
+      display: none;
+      background: #fee2e2;
+      color: #dc2626;
+      padding: 12px;
+      border-radius: 10px;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+
+    .success-text {
+      color: #15803d;
+      font-weight: bold;
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+
+    .reject-text {
+      color: #b91c1c;
+      font-weight: bold;
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+
+    ul {
+      margin-top: 8px;
+      padding-left: 20px;
+    }
+
+    li {
+      margin-bottom: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h1>Resume Upload & Shortlisting</h1>
+
+      <form id="shortlistForm">
+        <div class="form-group">
+          <label for="resume">Upload Resume (PDF)</label>
+          <input type="file" id="resume" accept=".pdf" required />
+        </div>
+
+        <div class="form-group">
+          <label for="role">Role</label>
+          <input type="text" id="role" placeholder="e.g. Backend Developer" required />
+        </div>
+
+        <div class="form-group">
+          <label for="job_description">Job Description</label>
+          <textarea id="job_description" placeholder="Paste the job description here..." required></textarea>
+        </div>
+
+        <button type="submit">Upload Resume & Check Shortlist Status</button>
+      </form>
+
+      <div class="loading" id="loadingBox">Processing resume analysis and shortlisting... Please wait...</div>
+      <div class="error" id="errorBox"></div>
+    </div>
+
+    <div class="result-box" id="resultBox"></div>
+  </div>
+
+  <script>
+    const form = document.getElementById("shortlistForm");
+    const loadingBox = document.getElementById("loadingBox");
+    const errorBox = document.getElementById("errorBox");
+    const resultBox = document.getElementById("resultBox");
+
+    const RESUME_ANALYSIS_API = "http://127.0.0.1:8000/api/resumes/analyze-resume/";
+    const SHORTLIST_API = "http://127.0.0.1:8000/api/shortlisting/shortlist/";
+
+    function showError(message) {
+      errorBox.style.display = "block";
+      errorBox.textContent = message;
+    }
+
+    function clearError() {
+      errorBox.style.display = "none";
+      errorBox.textContent = "";
+    }
+
+    function setLoading(show) {
+      loadingBox.style.display = show ? "block" : "none";
+    }
+
+    function renderChips(items) {
+      if (!items || items.length === 0) return "<p>None</p>";
+      return `
+        <div class="chips">
+          ${items.map(item => `<span class="chip">${item}</span>`).join("")}
+        </div>
+      `;
+    }
+
+    function renderShortlistResult(data) {
+      const isShortlisted = data.shortlist_status === "shortlisted";
+
+      resultBox.className = `result-box ${isShortlisted ? "shortlisted" : "rejected"}`;
+      resultBox.style.display = "block";
+
+      if (isShortlisted) {
+        const schedule = data.schedule?.schedule || data.schedule || null;
+
+        resultBox.innerHTML = `
+          <div class="success-text">Congratulations! You are shortlisted.</div>
+
+          <p><span class="label">Candidate Name:</span> ${data.candidate_name}</p>
+          <p><span class="label">Email:</span> ${data.email}</p>
+          <p><span class="label">Role:</span> ${data.role}</p>
+          <p><span class="label">Shortlist Score:</span> ${data.score}%</p>
+          <p><span class="label">Feedback:</span> ${data.feedback}</p>
+
+          <div class="section-title">Matching Skills</div>
+          ${renderChips(data.matching_skills)}
+
+          <div class="section-title">Interview Schedule</div>
+          ${
+            schedule
+              ? `
+                <p><span class="label">Interview Date:</span> ${schedule.interview_date}</p>
+                <p><span class="label">Interview Time:</span> ${schedule.interview_time}</p>
+                <p><span class="label">Status:</span> ${schedule.status}</p>
+              `
+              : "<p>Schedule not available.</p>"
+          }
+        `;
+      } else {
+        resultBox.innerHTML = `
+          <div class="reject-text">You are not shortlisted for this role currently.</div>
+
+          <p><span class="label">Candidate Name:</span> ${data.candidate_name}</p>
+          <p><span class="label">Email:</span> ${data.email}</p>
+          <p><span class="label">Role:</span> ${data.role}</p>
+          <p><span class="label">Shortlist Score:</span> ${data.score}%</p>
+          <p><span class="label">Feedback:</span> ${data.feedback}</p>
+
+          <div class="section-title">Matching Skills</div>
+          ${renderChips(data.matching_skills)}
+
+          <div class="section-title">Missing Skills / Requirements</div>
+          ${renderChips(data.missing_skills)}
+        `;
+      }
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      clearError();
+      resultBox.style.display = "none";
+      setLoading(true);
+
+      const fileInput = document.getElementById("resume");
+      const role = document.getElementById("role").value.trim();
+      const jobDescription = document.getElementById("job_description").value.trim();
+
+      if (!fileInput.files.length) {
+        setLoading(false);
+        showError("Please upload a resume PDF.");
+        return;
+      }
+
+      try {
+        // Step 1: Resume Analysis
+        const formData = new FormData();
+        formData.append("file", fileInput.files[0]);
+
+        const resumeResponse = await fetch(RESUME_ANALYSIS_API, {
+          method: "POST",
+          body: formData
+        });
+
+        const resumeData = await resumeResponse.json();
+
+        if (!resumeResponse.ok) {
+          throw new Error(resumeData.detail || "Resume analysis failed");
+        }
+
+        // Step 2: Shortlisting
+        const shortlistPayload = {
+          role: role,
+          job_description: jobDescription,
+          resume_analysis: resumeData
+        };
+
+        const shortlistResponse = await fetch(SHORTLIST_API, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(shortlistPayload)
+        });
+
+        const shortlistData = await shortlistResponse.json();
+
+        if (!shortlistResponse.ok) {
+          throw new Error(shortlistData.detail || "Shortlisting failed");
+        }
+
+        renderShortlistResult(shortlistData);
+
+      } catch (error) {
+        showError(error.message || "Something went wrong");
+      } finally {
+        setLoading(false);
+      }
+    });
+  </script>
+</body>
+</html>

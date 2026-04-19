@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HR Dashboard - AI Mock Interview</title>
+  <style>
+    * { box-sizing: border-box; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+    body { margin: 0; padding: 0; background: #f8fafc; color: #1e293b; }
+    .container { max-width: 1400px; margin: 40px auto; padding: 0 40px; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
+    h1 { margin: 0; font-size: 2rem; color: #0f172a; }
+    .config-section { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 20px; padding: 30px; margin-bottom: 40px; }
+    .config-title { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    .config-title h2 { margin: 0; font-size: 1.25rem; color: #1e40af; }
+    .config-details { font-size: 0.95rem; color: #1e293b; }
+    .btn-edit { background: #2563eb; color: white; border: none; padding: 10px 20px; border-radius: 10px; font-weight: 600; cursor: pointer; }
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-bottom: 40px; }
+    .stat-card { background: white; padding: 24px; border-radius: 16px; border: 1px solid #e2e8f0; text-align: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+    .stat-card h2 { margin: 0 0 10px; font-size: 0.9rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
+    .stat-card p { margin: 0; font-size: 2rem; font-weight: 800; color: #2563eb; }
+    .section { background: white; border-radius: 20px; padding: 30px; margin-bottom: 30px; border: 1px solid #e2e8f0; }
+    .section h2 { margin-top: 0; margin-bottom: 24px; font-size: 1.25rem; color: #0f172a; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 16px; text-align: left; border-bottom: 1px solid #f1f5f9; font-size: 0.95rem; }
+    th { background: #f8fafc; color: #475569; font-weight: 600; }
+    .status-badge { display: inline-block; padding: 6px 12px; border-radius: 9999px; font-size: 0.8rem; font-weight: 600; }
+    .status-scheduled { background: #eff6ff; color: #1d4ed8; }
+    .btn-view { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; padding: 8px 16px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .btn-view:hover { background: #e2e8f0; color: #0f172a; }
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); z-index: 1000; justify-content: center; align-items: center; }
+    .modal-content { background: white; width: 90%; max-width: 900px; max-height: 85vh; border-radius: 24px; padding: 40px; position: relative; overflow-y: auto; }
+    .modal-close { position: absolute; top: 24px; right: 24px; font-size: 1.5rem; cursor: pointer; color: #94a3b8; }
+    .chip { display: inline-block; background: #dbeafe; color: #1e40af; padding: 4px 10px; border-radius: 9999px; font-size: 0.8rem; margin-right: 6px; margin-bottom: 6px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+        <h1>Interview Session Tracker</h1>
+        <a href="/" style="color: #2563eb; font-weight: 600; text-decoration: none;">View Interview Portal</a>
+    </div>
+
+    <div id="loading" class="section" style="text-align: center;">Loading dashboard...</div>
+
+    <div class="config-section">
+        <div class="config-title">
+            <h2>Active Job Configuration</h2>
+            <button class="btn-edit" onclick="openConfigModal()">Update Requirements</button>
+        </div>
+        <div class="config-details">
+            <p><strong>Role:</strong> <span id="displayRole">Loading...</span></p>
+            <p><strong>Description:</strong> <span id="displayJD">Loading...</span></p>
+        </div>
+    </div>
+
+    <div id="dashboardStats" class="stats-grid" style="display: none;">
+      <div class="stat-card"><h2>Total Sessions</h2><p id="totalSessions">0</p></div>
+      <div class="stat-card"><h2>Total Answered</h2><p id="totalAnswered">0</p></div>
+      <div class="stat-card"><h2>Total Skipped</h2><p id="totalSkipped">0</p></div>
+      <div class="stat-card"><h2>Avg Score</h2><p id="avgScore">0%</p></div>
+    </div>
+
+    <!-- Interview Sessions Section -->
+    <div class="section">
+      <h2>Interview Sessions (Q&A Transcripts)</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Candidate</th>
+            <th>Role</th>
+            <th>Date</th>
+            <th>Answered</th>
+            <th>Skipped</th>
+            <th>Timed Out</th>
+            <th>Transcript</th>
+          </tr>
+        </thead>
+        <tbody id="sessionsTableBody">
+          <tr><td colspan="7" style="text-align:center;">Loading sessions...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Config Modal -->
+  <div id="configModal" class="modal-overlay">
+      <div class="modal-content" style="max-width: 600px;">
+          <span class="modal-close" onclick="closeConfigModal()">&times;</span>
+          <h2>Update Global Job Requirements</h2>
+          <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;">
+          <div style="margin-bottom: 20px;">
+              <label style="display:block;margin-bottom:8px;font-weight:600;">Active Role</label>
+              <input type="text" id="inputRole" style="width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:8px;">
+          </div>
+          <div style="margin-bottom: 20px;">
+              <label style="display:block;margin-bottom:8px;font-weight:600;">Full Job Description</label>
+              <textarea id="inputJD" style="width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:8px;min-height:200px;"></textarea>
+          </div>
+          <button class="btn-edit" style="width:100%;" onclick="saveJobConfig()">Save Global Configuration</button>
+      </div>
+  </div>
+
+  <!-- Transcript Modal -->
+  <div id="transcriptModal" class="modal-overlay">
+    <div class="modal-content" style="max-width:800px;max-height:80vh;overflow-y:auto;">
+      <span class="modal-close" onclick="closeTranscriptModal()">&times;</span>
+      <h2 id="transcriptTitle">Interview Transcript</h2>
+      <hr style="border:0;border-top:1px solid #e2e8f0;margin:20px 0;">
+      <div id="transcriptContent"></div>
+    </div>
+  </div>
+
+  <script>
+    var API_BASE = window.location.origin;
+    var sessionsData = [];
+
+    async function loadDashboard() {
+      try {
+        var cfgResponse = await fetch(API_BASE + '/api/job-config/');
+        var cfgData = await cfgResponse.json();
+        document.getElementById('displayRole').textContent = cfgData.role;
+        document.getElementById('displayJD').textContent = cfgData.job_description;
+        document.getElementById('inputRole').value = cfgData.role;
+        document.getElementById('inputJD').value = cfgData.job_description;
+        document.getElementById('loading').style.display = 'none';
+      } catch (e) {
+        document.getElementById('loading').textContent = 'Error loading config.';
+      }
+    }
+
+    async function loadSessions() {
+      try {
+        var res = await fetch(API_BASE + '/api/interview-sessions/');
+        sessionsData = await res.json();
+
+        document.getElementById('dashboardStats').style.display = 'grid';
+        document.getElementById('totalSessions').textContent = sessionsData.length;
+
+        var totalA = 0, totalS = 0, totalT = 0;
+        for (var i = 0; i < sessionsData.length; i++) {
+          totalA += sessionsData[i].answered_count;
+          totalS += sessionsData[i].skipped_count;
+          totalT += sessionsData[i].timed_out_count;
+        }
+        document.getElementById('totalAnswered').textContent = totalA;
+        document.getElementById('totalSkipped').textContent = totalS;
+        var totalQ = totalA + totalS + totalT;
+        document.getElementById('avgScore').textContent = totalQ > 0 ? Math.round((totalA / totalQ) * 100) + '%' : '0%';
+
+        var body = document.getElementById('sessionsTableBody');
+        if (sessionsData.length === 0) {
+          body.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#94a3b8;">No interview sessions yet. Students will appear here after completing an interview.</td></tr>';
+          return;
+        }
+        var html = '';
+        for (var i = 0; i < sessionsData.length; i++) {
+          var s = sessionsData[i];
+          html += '<tr>' +
+            '<td><div style="font-weight:600;">' + s.candidate_name + '</div></td>' +
+            '<td>' + s.role + '</td>' +
+            '<td>' + s.created_at + '</td>' +
+            '<td style="color:#22c55e;font-weight:700;">' + s.answered_count + '</td>' +
+            '<td style="color:#f59e0b;font-weight:700;">' + s.skipped_count + '</td>' +
+            '<td style="color:#ef4444;font-weight:700;">' + s.timed_out_count + '</td>' +
+            '<td><button class="btn-view" onclick="openTranscript(' + i + ')">View Transcript</button></td>' +
+          '</tr>';
+        }
+        body.innerHTML = html;
+      } catch(e) {
+        document.getElementById('sessionsTableBody').innerHTML = '<tr><td colspan="7" style="text-align:center;color:#dc2626;">Error loading sessions</td></tr>';
+      }
+    }
+
+    function openTranscript(index) {
+      var session = sessionsData[index];
+      if (!session) return;
+      document.getElementById('transcriptTitle').textContent = session.candidate_name + ' - ' + session.role + ' Interview';
+      var container = document.getElementById('transcriptContent');
+      var html = '';
+      var transcript = session.transcript || [];
+      for (var i = 0; i < transcript.length; i++) {
+        var t = transcript[i];
+        var borderColor = t.status === 'answered' ? '#22c55e' : t.status === 'skipped' ? '#f59e0b' : '#ef4444';
+        html += '<div style="background:#f8fafc;border-radius:12px;padding:16px;margin-bottom:12px;border-left:4px solid ' + borderColor + ';">' +
+          '<div style="font-weight:600;color:#0f172a;margin-bottom:8px;">Q' + t.question_no + ': ' + t.question + '</div>' +
+          '<div style="color:#334155;font-style:italic;margin-bottom:6px;">"' + t.answer + '"</div>' +
+          '<div style="display:flex;gap:16px;font-size:0.8rem;">' +
+            '<span style="color:' + borderColor + ';font-weight:600;text-transform:uppercase;">' + (t.status || '').replace('-',' ') + '</span>' +
+            '<span style="color:#94a3b8;">Time: ' + (t.time_taken || 0) + 's / 60s</span>' +
+          '</div></div>';
+      }
+      container.innerHTML = html;
+      document.getElementById('transcriptModal').style.display = 'flex';
+    }
+
+    function closeTranscriptModal() {
+      document.getElementById('transcriptModal').style.display = 'none';
+    }
+
+    function openConfigModal() {
+      document.getElementById('configModal').style.display = 'flex';
+    }
+    function closeConfigModal() {
+      document.getElementById('configModal').style.display = 'none';
+    }
+
+    async function saveJobConfig() {
+      var role = document.getElementById('inputRole').value;
+      var jd = document.getElementById('inputJD').value;
+      try {
+        var res = await fetch(API_BASE + '/api/job-config/', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({role: role, job_description: jd})
+        });
+        if(res.ok) { alert('Job configuration updated!'); location.reload(); }
+      } catch(e) { alert('Failed to update config'); }
+    }
+
+    window.onclick = function(event) {
+      if (event.target == document.getElementById('configModal')) closeConfigModal();
+      if (event.target == document.getElementById('transcriptModal')) closeTranscriptModal();
+    };
+
+    loadDashboard();
+    loadSessions();
+  </script>
+</body>
+</html>
