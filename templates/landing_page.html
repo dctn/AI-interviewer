@@ -1,0 +1,394 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>InterviewAI — Practice Like It's Real</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Syne:wght@400;500;600&display=swap" rel="stylesheet">
+    
+  <link rel="stylesheet" href="{% static 'css/landing_page.css' %}"/>
+</head>
+<body>
+
+  <div class="noise"></div>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-inner">
+      <a href="#" class="logo">AI interview<span> Coach</span></a>
+      <div class="nav-right">
+        <a href="#how" class="nav-link">How it works</a>
+        <a href="#pricing" class="nav-link">Pricing</a>
+        <a href="{% url 'account_signup' %}" class="nav-cta">Try Free</a>
+          {% if request.user.is_authenticated %}
+        <a href="{% url 'account_logout' %}" class="nav-cta">Logout</a>
+          {% endif %}
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+
+    <div class="hero-inner">
+      <div class="hero-pill">This is it</div>
+
+      <h1 class="hero-h1">
+        You've learn every<br>
+        thing. You still<br>
+        <em>freeze in the room.</em>
+      </h1>
+
+      <p class="hero-body">
+        Real interviews don't care about your notes.<br>
+        This does something about that.
+      </p>
+
+      <div class="hero-cta-row">
+        <a href="#" class="btn-primary">Start Your First Mock Interview</a>
+        <a href="#how" class="btn-ghost">See how it works →</a>
+      </div>
+
+      <p class="hero-micro">Free forever plan. No card needed. Takes 2 minutes.</p>
+
+      <div class="hero-stats-row">
+        <div class="hstat">
+          <span class="hstat-n">12,000+</span>
+          <span class="hstat-l">practice sessions done</span>
+        </div>
+        <div class="hstat-sep"></div>
+        <div class="hstat">
+          <span class="hstat-n">83%</span>
+          <span class="hstat-l">felt more confident after 3 sessions</span>
+        </div>
+        <div class="hstat-sep"></div>
+        <div class="hstat">
+          <span class="hstat-n">2 min</span>
+          <span class="hstat-l">to start your first mock interview</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MARQUEE -->
+  <div class="marquee-wrap">
+    <div class="marquee-track">
+      <span>Practice That Feels Real</span><span class="mdot">·</span>
+      <span>Instant Honest Feedback</span><span class="mdot">·</span>
+      <span>Voice &amp; Video Analysis</span><span class="mdot">·</span>
+      <span>Built for Indian Freshers</span><span class="mdot">·</span>
+      <span>Confidence, Not Just Content</span><span class="mdot">·</span>
+      <span>Practice That Feels Real</span><span class="mdot">·</span>
+      <span>Instant Honest Feedback</span><span class="mdot">·</span>
+      <span>Voice &amp; Video Analysis</span><span class="mdot">·</span>
+      <span>Built for Indian Freshers</span><span class="mdot">·</span>
+      <span>Confidence, Not Just Content</span><span class="mdot">·</span>
+    </div>
+  </div>
+
+  <!-- PROBLEM -->
+  <section class="section problem-sec">
+    <div class="container">
+      <div class="problem-layout">
+        <div class="problem-left">
+          <div class="tag-pill">The real problem</div>
+          <h2 class="sec-h2">
+            You're preparing.<br>
+            Just not the<br><em>right way.</em>
+          </h2>
+          <p class="sec-p">
+            Watching YouTube videos, memorising frameworks, rehearsing in front of a mirror — none of it is the same as speaking under actual pressure. That gap is why you freeze. And that's exactly what this fixes.
+          </p>
+          <div class="stat-stack">
+            <div class="stat-row">
+              <span class="stat-big">83%</span>
+              <span class="stat-desc">of freshers say they knew the answer but couldn't say it clearly when someone was watching</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-big">0</span>
+              <span class="stat-desc">real feedback sessions most students get before walking into their actual placement interview</span>
+            </div>
+          </div>
+        </div>
+        <div class="problem-right">
+          <div class="pain-card">
+            <div class="pain-num">01</div>
+            <h3>You freeze mid-answer</h3>
+            <p>You knew it at home. The moment someone's watching — blank. Your voice drops. You ramble. You hate yourself for it the whole drive back.</p>
+          </div>
+          <div class="pain-card">
+            <div class="pain-num">02</div>
+            <h3>Nobody tells you what's wrong</h3>
+            <p>Friends say "sounded fine." Family says "you'll do great." Then you don't get the job. And nobody, including you, knows exactly why.</p>
+          </div>
+          <div class="pain-card pain-card-lit">
+            <div class="pain-num">03</div>
+            <h3>You read answers, not say them</h3>
+            <p>There's a huge gap between reading something and speaking it under pressure. You've been training the wrong skill your entire preparation.</p>
+          </div>
+          <div class="pain-card">
+            <div class="pain-num">04</div>
+            <h3>Confident people get the offer</h3>
+            <p>Not always the most qualified. Confidence is a learnable skill. You just haven't had the right environment to build it — until now.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BOLD BREAK -->
+  <div class="bold-break">
+    <div class="container">
+      <p class="break-text">Most people practice blindly.<br><em>You won't.</em></p>
+    </div>
+  </div>
+
+  <!-- HOW IT WORKS -->
+  <section class="section how-sec" id="how">
+    <div class="container">
+      <div class="tag-pill">How it works</div>
+      <h2 class="sec-h2" style="max-width:560px;">
+        Not a quiz app.<br>
+        A real interview —<br>
+        <em>with a coach that doesn't lie to you.</em>
+      </h2>
+
+      <div class="steps-grid">
+        <div class="step-card">
+          <div class="step-n">01</div>
+          <h3>Pick your role</h3>
+          <p>Software engineer? HR round? Product? Tell us the job and we build the right interview. Real domain. Real questions.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-n">02</div>
+          <h3>Answer on camera</h3>
+          <p>You speak. It records. Voice and video — just like the real thing. No typing. No looking up answers. Full pressure, zero judgment.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-n">03</div>
+          <h3>Get the real breakdown</h3>
+          <p>What you said. How clearly. Whether you sounded confident. Where your attention drifted. All of it, instantly after each answer.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-n">04</div>
+          <h3>Improve. Repeat. Get hired.</h3>
+          <p>Go again, better. Watch yourself improve, session by session. Walk into the real interview knowing you've already done the hard work.</p>
+        </div>
+      </div>
+
+      <div class="vs-block">
+        <div class="vs-col vs-bad">
+          <div class="vs-lbl">Practicing alone</div>
+          <ul>
+            <li>Answer into the void — no idea if it landed</li>
+            <li>No one catches your 12 "umms"</li>
+            <li>No pressure = no real growth</li>
+            <li>You think you're ready. You probably aren't.</li>
+          </ul>
+        </div>
+        <div class="vs-mid">vs</div>
+        <div class="vs-col vs-good">
+          <div class="vs-lbl">With InterviewAI</div>
+          <ul>
+            <li>Real simulation, real feedback, every time</li>
+            <li>Knows when you rambled, rushed, or zoned out</li>
+            <li>Tracks growth across every session</li>
+            <li>Leave every session actually better than you came in</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="section feat-sec">
+    <div class="container">
+      <div class="tag-pill">Features</div>
+      <h2 class="sec-h2">Everything built for<br><em>one goal: your offer letter.</em></h2>
+
+      <div class="feat-bento">
+        <div class="feat-card feat-big">
+          <div class="feat-ico">🎙️</div>
+          <h3>Voice &amp; Video Answers</h3>
+          <p>Speak your answers like you would in a real interview. Not typing. Talking. Because that's the skill that actually needs to feel comfortable before the real thing.</p>
+        </div>
+        <div class="feat-card">
+          <div class="feat-ico">🧠</div>
+          <h3>Deep Answer Analysis</h3>
+          <p>Content, clarity, confidence — all scored. No more guessing if your answer was good enough.</p>
+        </div>
+        <div class="feat-card">
+          <div class="feat-ico">👁️</div>
+          <h3>Focus Detection</h3>
+          <p>Catches when your attention slips. Trains you to stay locked in — which is exactly what interviewers notice but never say.</p>
+        </div>
+        <div class="feat-card">
+          <div class="feat-ico">⚡</div>
+          <h3>Instant Feedback</h3>
+          <p>Right after each answer. Specific, actionable, honest. Not a week later from someone who wants to spare your feelings.</p>
+        </div>
+        <div class="feat-card feat-big">
+          <div class="feat-ico">📈</div>
+          <h3>Progress Tracking</h3>
+          <p>Session-by-session improvement tracking. Watch the graph go up. There is nothing more motivating during placement season than seeing actual data on your own growth.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+<!-- PRICING -->
+
+<section class="section pricing-sec" id="pricing">
+
+  <div class="container">
+
+    <div class="tag-pill">Pricing</div>
+
+    <h2 class="sec-h2">
+      Spend a little.<br>
+      <em>Show up prepared.</em>
+    </h2>
+
+    <p class="sec-p" style="max-width:500px;margin-bottom:3.5rem;">
+      One small spend now can save you from a missed opportunity later. Practice before it matters.
+    </p>
+
+    <div class="price-grid">
+
+      <!-- FREE -->
+      <div class="p-card">
+        <div class="p-name">Free</div>
+        <div class="p-price">₹0 <span>/ forever</span></div>
+        <p class="p-desc">Try it once. No pressure, no commitment.</p>
+        <ul class="p-list">
+          <li>1 full mock interview</li>
+          <li>Basic answer feedback</li>
+          <li>Limited question set</li>
+          <li>No signup required</li>
+        </ul>
+        <a href="#" class="btn-price-ghost">Start Free</a>
+      </div>
+
+      <!-- VALUE (MOST POPULAR) -->
+      <div class="p-card p-featured">
+        <div class="p-badge">Most popular</div>
+        <div class="p-name">Value Pack</div>
+        <div class="p-price">₹99 <span>/ pack</span></div>
+        <p class="p-desc">Less than a movie ticket. More useful than guessing in interviews.</p>
+        <ul class="p-list">
+          <li>8 full mock interviews</li>
+          <li>Detailed answer evaluation</li>
+          <li>Resume-based questions</li>
+          <li>Smarter feedback suggestions</li>
+          <li>Performance improvement tips</li>
+        </ul>
+        <a href="#" class="btn-price-primary">Get Value Pack — ₹99</a>
+      </div>
+
+      <!-- STARTER -->
+      <div class="p-card">
+        <div class="p-name">Starter</div>
+        <div class="p-price">₹49 <span>/ pack</span></div>
+        <p class="p-desc">Costs less than your evening snacks. A better trade for your next interview.</p>
+        <ul class="p-list">
+          <li>3 full mock interviews</li>
+          <li>Content + clarity analysis</li>
+          <li>Better question quality</li>
+          <li>Instant feedback after each answer</li>
+        </ul>
+        <a href="#" class="btn-price-ghost">Get Starter — ₹49</a>
+      </div>
+
+
+
+    </div>
+
+    <p class="price-footer">
+      No subscriptions. No hidden charges. Use anytime. Practice now — perform better when it counts.
+    </p>
+
+  </div>
+
+</section>
+
+  <!-- TESTIMONIALS -->
+  <section class="section testi-sec">
+    <div class="container">
+      <div class="tag-pill">Real people</div>
+      <h2 class="sec-h2">Don't take our word for it.</h2>
+      <div class="testi-grid">
+        <div class="testi-card">
+          <p class="testi-q">"I failed 4 interviews back to back with no idea what I was doing wrong. Two weeks here and I cracked a product startup offer. The feedback on my clarity genuinely changed how I speak."</p>
+          <div class="testi-who">
+            <div class="tav" style="background:#0d1f3c;color:#60a5fa;">PR</div>
+            <div><strong>Priya R.</strong><span>CS final year · Pune University</span></div>
+          </div>
+        </div>
+        <div class="testi-card">
+          <p class="testi-q">"My biggest problem was confidence — I knew my stuff but couldn't show it. The attention detection that catches when you rush or look away? That was my wake-up call."</p>
+          <div class="testi-who">
+            <div class="tav" style="background:#2d1500;color:#fb923c;">AK</div>
+            <div><strong>Arjun K.</strong><span>MBA fresher · placed at FMCG company</span></div>
+          </div>
+        </div>
+        <div class="testi-card">
+          <p class="testi-q">"I thought mock interviews needed a real human. This felt just as real, more honest actually. My friends would never tell me I was rambling. This did. Immediately."</p>
+          <div class="testi-who">
+            <div class="tav" style="background:#052e16;color:#4ade80;">SM</div>
+            <div><strong>Sanya M.</strong><span>ECE · IIT Roorkee</span></div>
+          </div>
+        </div>
+        <div class="testi-card">
+          <p class="testi-q">"3rd year me was terrified of HR rounds. 4th year me walked into three in a row and cracked all three. The only real difference was deliberate, recorded, reviewed practice."</p>
+          <div class="testi-who">
+            <div class="tav" style="background:#1a0533;color:#c084fc;">RV</div>
+            <div><strong>Rohan V.</strong><span>B.Tech · now at a product company</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section class="final-sec">
+    <div class="orb orb-f1"></div>
+    <div class="orb orb-f2"></div>
+    <div class="container final-inner">
+      <div class="hero-pill">This is it</div>
+      <h2 class="final-h2">
+        Your next interview<br>
+        shouldn't be your<br>
+        <em>first real practice.</em>
+      </h2>
+      <p class="final-body">Every person who got that job you wanted — they practiced more deliberately. Start today. Takes 2 minutes to set up and the first session is completely free.</p>
+      <p class="final-italic">One job offer is worth more than every excuse you've been making.</p>
+      <div class="final-cta-row">
+        <a href="#" class="btn-primary">Start Your First Mock Interview</a>
+        <a href="#how" class="btn-ghost">See how it works first →</a>
+      </div>
+      <p class="final-note">Free forever plan available. No credit card required.</p>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="container footer-in">
+      <div class="f-logo">interview<span>ai</span><span class="fpurp">.</span></div>
+      <div class="f-links">
+        <a href="#">Privacy</a>
+        <a href="#">Terms</a>
+        <a href="#">Blog</a>
+        <a href="#">Contact</a>
+      </div>
+      <p class="f-copy">Built with care for students across India · © 2025 InterviewAI</p>
+    </div>
+  </footer>
+
+</body>
+</html>

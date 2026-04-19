@@ -42,6 +42,12 @@ INSTALLED_APPS = [
 
     'channels',
     'core.apps.CoreConfig',
+
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
+
 ]
 
 MIDDLEWARE = [
@@ -52,6 +58,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "allauth.account.middleware.AccountMiddleware",
+
 ]
 
 ROOT_URLCONF = 'AI_mock_interviewer.urls'
@@ -67,10 +75,20 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+
+                # `allauth` needs this from django
+                'django.template.context_processors.request',
             ],
         },
     },
 ]
+
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+
 ASGI_APPLICATION = "AI_mock_interviewer.asgi.application"
 WSGI_APPLICATION = 'AI_mock_interviewer.wsgi.application'
 
@@ -120,4 +138,16 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
+
 STATIC_URL = 'static/'
+STATICFILES_DIRS = [ BASE_DIR / "static" ]
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+
+
+SOCIALACCOUNT_LOGIN_ON_GET = True
+ACCOUNT_LOGOUT_ON_GET = True
+LOGIN_REDIRECT_URL = 'home'
+ACCOUNT_LOGIN_CANCEL_REDIRECT_URL = '/'
+ACCOUNT_SOCIALACCOUNT_LOGIN_CANCELLED_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = 'home'

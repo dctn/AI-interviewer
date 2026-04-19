@@ -77,7 +77,13 @@ socket.onmessage = (event) => {
         return;
     }
     else{
-        result.innerText = data.is_cheating
+        if (data.is_cheating) {
+        result.innerText = `cheating --${data.fusion_score}`
+        }
+        else{
+        result.innerText = `no cheating --${data.fusion_score}`
+
+        }
     }
 
     isCalibrating = false;

@@ -18,7 +18,7 @@ class IrisCalibration:
                 'samples': []
             },
             'left': {
-                'point': (50, screen_CY),
+                'point': (150, screen_CY),
                 'samples': []
             },
             'right': {
