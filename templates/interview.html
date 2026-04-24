@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+
+<script>
+
+    let questions = {
+        1: "Tell me about yourself",
+        2: "What are your strengths?",
+
+    };
+
+
+    let q_id = 1
+    let all_answer = []
+    question_length = Object.keys(questions).length
+
+    function blobToBase64(blob) {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result.split(',')[1]);
+            reader.readAsDataURL(blob);
+        });
+    }
+
+    function getCookie(name) {
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+            const [key, val] = cookie.trim().split('=');
+            if (key === name) return decodeURIComponent(val);
+        }
+        return null;
+    }
+
+    async function finishInterview() {
+        console.log("Sending all answers...");
+        const formData = new FormData();
+
+        for (let ans of all_answer) {
+            // blob directly as a file — no base64 conversion
+            const file = new File([ans.ans_blob], `q${ans.question_id}.webm`, {type: 'audio/webm'});
+            formData.append('audio_files', file);
+            formData.append('question_ids', ans.question_id);
+            formData.append('question_text', ans.question_text);
+        }
+
+        const response = await fetch('/interview/result/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')   // django csrf
+            },
+            body: formData
+        });
+
+        const result = await response.json();
+    }
+
+    function askQuestion() {
+        if (q_id > question_length) {
+            console.log('interview done')
+            console.log(all_answer)
+
+            // playing recored audio
+
+            finishInterview()
+            return;
+        } else {
+            speakQuestion(questions[q_id])
+        }
+
+    }
+
+    function speakQuestion(text) {
+        const utterance = new SpeechSynthesisUtterance(text);
+
+        utterance.lang = 'en-US';
+        utterance.rate = 0.9;
+        utterance.pitch = 0.5;
+
+        utterance.onstart = () => {
+            console.log("Question started speaking...");
+        };
+
+        utterance.onend = () => {
+            console.log("Question finished — now start recording!");
+            voice()
+        };
+
+        window.speechSynthesis.speak(utterance);
+    }
+
+
+    async function voice() {
+        const voice_stream = await navigator.mediaDevices.getUserMedia({audio: true})
+        const voice_recorder = new MediaRecorder(voice_stream)
+
+        const SILENCE_THRESHOLD = 0.01;    // below this = silence
+        const SILENCE_WAIT = 1500;         // wait value
+
+        const voice_chuck = [];
+        voice_recorder.ondataavailable = (e) => {
+            voice_chuck.push(e.data);
+            {#console.log(e.data)#}
+        };
+
+        voice_recorder.onstop = () => {
+            const blob = new Blob(voice_chuck, {type: 'audio/webm'});
+            console.log('recording saved location:', blob)
+            all_answer.push({
+                question_text: questions[q_id],
+                ans_blob: blob,
+                question_id: q_id
+            })
+            q_id++
+            askQuestion()
+        };
+
+
+        const audioCtx = new AudioContext();
+        const analyser = audioCtx.createAnalyser();
+        const source = audioCtx.createMediaStreamSource(voice_stream);
+
+        source.connect(analyser);
+        const data = new Uint8Array(analyser.frequencyBinCount);
+        let silenceTimer = null;
+
+        function checkVolume() {
+            analyser.getByteTimeDomainData(data);
+
+            let sum = 0;
+            for (let i = 0; i < data.length; i++) {
+                const val = (data[i] - 128) / 128;
+                sum += val * val;
+            }
+
+            const volume = Math.sqrt(sum / data.length);
+            console.log("Volume:", volume);
+
+            if (volume < SILENCE_THRESHOLD) {
+                if (!silenceTimer) {
+                    silenceTimer = setTimeout(() => {
+                            console.log("Silence detected! Stopping...")
+                            voice_recorder.stop()
+                        },
+                        SILENCE_WAIT)
+                }
+            } else {
+                clearTimeout(silenceTimer)
+                silenceTimer = null
+            }
+
+            if (voice_recorder.state === "recording") {
+                requestAnimationFrame(checkVolume);
+            }
+        }
+
+        voice_recorder.start(250);
+        checkVolume();
+    }
+
+    askQuestion()
+</script>
+</body>
+</html>

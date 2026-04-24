@@ -1,0 +1,334 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block head %}
+    <link rel="stylesheet" href="{% static 'css/resume_analysis.css' %}"/>
+
+{% endblock %}
+
+{% block body %}
+
+    <div id="loading-screen">
+        <div class="loader-box">
+            <div class="spinner"></div>
+            <p>Analyzing your resume...</p>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════
+        PAGE HEADER
+   ═══════════════════════════════════ -->
+    <header class="page-header">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="header-inner">
+            <div class="header-tag">AI-Powered Tool</div>
+            <h1 class="header-h1">Resume <em>Analyzer</em></h1>
+            <p class="header-sub">Upload your resume and paste the job description. Get a match score, keyword gaps,
+                honest feedback, and predicted interview questions — instantly.</p>
+        </div>
+    </header>
+
+    <!-- ═══════════════════════════════════
+         MAIN CONTENT
+    ═══════════════════════════════════ -->
+
+    <main class="main-wrap">
+        <div class="page-container">
+
+            {% if not result %}
+                <!-- ─────────────────────────────
+                     UPLOAD FORM (shown before analysis)
+                ───────────────────────────────── -->
+                <section class="upload-section">
+                    <form method="POST" enctype="multipart/form-data" id="resumeForm">
+                        {% csrf_token %}
+
+                        <div class="form-grid">
+
+                            <!-- Resume Upload -->
+                            <div class="form-col">
+                                <label class="field-label">Resume</label>
+                                <label class="drop-zone" for="resumeFile">
+                                    <div class="drop-icon">
+                                        <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                                            <rect x="7" y="4" width="26" height="32" rx="3"
+                                                  stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 2.5"/>
+                                            <path d="M14 16h12M14 21h12M14 26h8"
+                                                  stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                            <path d="M26 4v8h8" stroke="currentColor" stroke-width="1.5"/>
+                                        </svg>
+                                    </div>
+                                    <p class="drop-title">Drag &amp; Drop Resume</p>
+                                    <p class="drop-sub">PDF, DOCX — up to 10MB</p>
+                                    <span class="btn-browse-label">Browse Files</span>
+                                    <input type="file" id="resumeFile" name="resume" accept=".pdf" required/>
+                                    {#                  {{ form.resume }}#}
+                                </label>
+                                {% if form.resume.errors %}
+                                    <p class="field-error">{{ form.resume.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+
+                            <!-- Job Description -->
+                            <div class="form-col">
+                                <div class="field-label-row">
+                                    <label class="field-label" for="jobDescription">Job Description</label>
+                                    <span class="optional-note">Optional but recommended</span>
+
+                                </div>
+                                <p id="jd-counter" class="char-counter">0 / 150 characters</p>
+                                <textarea
+                                        id="jobDescription"
+                                        name="jd"
+                                        class="jd-textarea"
+                                        rows="10"
+                                        placeholder="Example:&#10;We are looking for a React developer with 2+ years of experience. Must know TypeScript, Node.js, and REST APIs..."
+                                >{% if form.job_description.value %}
+                                    {{ form.job_description.value }}{% endif %}</textarea>
+                                <p class="field-hint">The more detail you add, the more accurate the match score.</p>
+                                {% if form.jd.errors %}
+                                    <p class="field-error">{{ form.jd.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+
+                        </div>
+
+                        <!-- Error messages -->
+                        {% if messages %}
+                            <div class="form-messages">
+                                {% for message in messages %}
+                                    <p class="form-error-msg">{{ message }}</p>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        <!-- Submit -->
+                        <div class="submit-row">
+                            <button type="submit" class="btn-analyze" >
+                                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                                    <circle cx="9" cy="9" r="7" stroke="white" stroke-width="1.5"/>
+                                    <path d="M6 9l2 2 4-4" stroke="white" stroke-width="1.5"
+                                          stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                Analyze Resume
+                            </button>
+                            <p class="submit-note">Results are private and never stored.</p>
+                        </div>
+
+                    </form>
+                </section>
+
+            {% else %}
+                <!-- ─────────────────────────────
+                     RESULTS (shown after analysis)
+                     Pass context: result = {
+                       score: 78,
+                       caption: "Great match!...",
+                       matched: ["React.js", "TypeScript", ...],
+                       missing: ["Node.js", "AWS Lambda", ...],
+                       strengths: ["...", "...", "..."],
+                       improvements: ["...", "...", "..."],
+                       questions: ["...", "...", "..."],
+                     }
+                ───────────────────────────────── -->
+                <section class="results-section">
+
+                    <!-- ── ROW 1: Score + Keywords ── -->
+                    <div class="results-row-1">
+
+                        <!-- Score Card -->
+                        <div class="score-card">
+                            <p class="score-card-label">Overall Match Score</p>
+
+                            <div class="ring-wrap">
+                                <!--
+                SVG ring: circumference = 2 * π * 54 ≈ 339.3
+                stroke-dashoffset = 339.3 * (1 - score/100)
+                For 78% → offset = 339.3 * 0.22 ≈ 74.6
+                Django: {{ 339.3|floatformat:1 }} and compute offset in view
+              -->
+                                <svg class="ring-svg" viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg">
+                                    <!-- Track -->
+                                    <circle
+                                            cx="70" cy="70" r="54"
+                                            fill="none"
+                                            stroke="rgba(108,92,231,0.15)"
+                                            stroke-width="10"
+                                    />
+                                    <!-- Progress arc — rotate -90deg so it starts at top -->
+                                    <circle
+                                            cx="70" cy="70" r="54"
+                                            fill="none"
+                                            stroke="url(#ringGrad)"
+                                            stroke-width="10"
+                                            stroke-linecap="round"
+                                            stroke-dasharray="339.3"
+                                            stroke-dashoffset="calc(339.3 * (1 - {{ result.overall_score|default:78 }} / 100))"
+                                            transform="rotate(-90 70 70)"
+                                    />
+                                    <defs>
+                                        <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                            <stop offset="0%" stop-color="#8b7cf8"/>
+                                            <stop offset="100%" stop-color="#6c5ce7"/>
+                                        </linearGradient>
+                                    </defs>
+                                </svg>
+                                <div class="ring-center">
+                                    <span class="ring-num">{{ result.overall_score|default:'78' }}%</span>
+                                </div>
+                            </div>
+
+                            <p class="score-caption">{{ result.recruiter_note|default:"Great match! Your experience aligns well with the core requirements." }}</p>
+                        </div>
+
+                        <!-- Keywords Card -->
+                        <div class="keywords-card">
+                            <div class="kw-section">
+                                <div class="kw-header matched-header">
+                                    <span class="kw-dot green-dot"></span>
+                                    Matched Skills and Keywords
+                                </div>
+                                <div class="kw-chips">
+                                    {% for kw in result.matching_skills %}
+                                        <span class="chip chip-green">{{ kw }}</span>
+                                    {% empty %}
+                                        <span class="no-kw">No matched keywords found.</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <div class="kw-divider"></div>
+
+                            <div class="kw-section">
+                                <div class="kw-header missing-header">
+                                    <span class="kw-dot red-dot"></span>
+                                    Missing Keywords
+                                </div>
+                                <div class="kw-chips">
+                                    {% for kw in result.missing_skills %}
+                                        <span class="chip chip-red">{{ kw }}</span>
+                                    {% empty %}
+                                        <span class="no-kw">No missing keywords — great coverage!</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- ── ROW 2: Strengths + Improvements ── -->
+                    <div class="results-row-2">
+
+                        <div class="feedback-card card-strengths">
+                            <div class="feedback-head">
+                                <span class="ficon green-icon">✦</span>
+                                <h3>Key Strengths</h3>
+                            </div>
+                            <ul class="feedback-list green-list">
+                                {% for item in result.strong_points %}
+                                    <li>{{ item }}</li>
+                                {% empty %}
+                                    <li>No specific strengths detected.</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+
+                        <div class="feedback-card card-improvements">
+                            <div class="feedback-head">
+                                <span class="ficon amber-icon">◆</span>
+                                <h3>Recommended Improvements</h3>
+                            </div>
+                            <ul class="feedback-list amber-list">
+                                {% for item in result.improvement_tips %}
+                                    <li>{{ item }}</li>
+                                {% empty %}
+                                    <li>No specific improvements suggested.</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+
+                    </div>
+
+                    <!-- ── ROW 3: Predicted Interview Questions ── -->
+                    <div class="questions-card">
+                        <div class="questions-head">
+                            <div>
+                                <h3>Predicted Interview Questions</h3>
+                                <p class="questions-sub">Be prepared to answer these based on your profile and the job
+                                    description.</p>
+                            </div>
+                        </div>
+
+                        <div class="questions-list">
+                            {% for question in result.predicted_interview_questions %}
+                                <div class="q-item">
+                                    <span class="q-num">0{{ forloop.counter }}</span>
+                                    <p>"{{ question }}"</p>
+                                </div>
+                            {% empty %}
+                                <p class="no-kw">No questions generated.</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- ── Analyze Again ── -->
+                    <div class="again-row">
+                        <a href="{% url 'resume_analysis' %}" class="btn-again">← Analyze Another Resume</a>
+                        <a href="{% url 'home' %}#pricing" class="btn-upgrade">Get Full Interview Practice →</a>
+                    </div>
+
+                </section>
+            {% endif %}
+
+        </div>
+    </main>
+
+{% endblock %}
+
+{% block script %}
+    <script>
+        // live char showing
+        const textarea = document.getElementById("jobDescription");
+        const counter = document.getElementById("jd-counter");
+        const minLength = 150;
+        const submitBtn = document.getElementById("submitBtn");
+
+
+        function updateCounter() {
+            const length = textarea.value.length;
+            counter.textContent = `${length} / ${minLength} characters`;
+
+            if (length < minLength) {
+                counter.style.color = "#e74c3c"; // red
+                submitBtn.disabled = true
+            } else {
+                counter.style.color = "#2ecc71"; // green
+                submitBtn.disabled = false
+
+            }
+        }
+
+        // Run on typing
+        textarea.addEventListener("input", updateCounter);
+
+        // Run on page load (important for pre-filled value)
+        updateCounter();
+
+
+        const form = document.getElementById("resumeForm");
+
+        if (form) {   // ✅ prevent crash
+            form.addEventListener("submit", function (e) {
+                e.preventDefault();
+
+                document.getElementById("loading-screen").style.display = "flex";
+
+                setTimeout(() => {
+                    form.submit();
+                }, 100);
+            });
+        }
+    </script>
+{% endblock %}
+

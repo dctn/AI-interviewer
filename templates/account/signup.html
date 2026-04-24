@@ -1,19 +1,14 @@
 {% load static socialaccount i18n %}
 
-
-{% block extra_head %}
 <link rel="stylesheet" href="{% static 'css/landing_page.css' %}"/>
-{% endblock %}
 
-{% block content %}
+<div class="hero signup-hero">
 
-<div class="hero" style="min-height:100vh; display:flex; align-items:center; justify-content:center;">
-
-    <div class="hero-inner" style="max-width:420px; width:100%; text-align:center;">
+    <div class="hero-inner signup-box">
 
         <div class="hero-pill">Start free</div>
 
-        <h1 class="hero-h1" style="font-size:2.3rem;">
+        <h1 class="hero-h1 signup-title">
             Start your journey<br>
             <em>with one click.</em>
         </h1>
@@ -22,22 +17,20 @@
             No forms. No friction. Just sign in with Google.
         </p>
 
-        <!-- GOOGLE LOGIN BUTTON -->
-        <a href="{% provider_login_url 'google' %}" class="btn-primary" style="width:100%; display:inline-block; margin-top:1.5rem;">
+        <!-- GOOGLE LOGIN -->
+        <a href="{% provider_login_url 'google' %}" class="btn-primary signup-btn">
             Continue with Google →
         </a>
 
-        <!-- LOGIN LINK -->
-        <p style="margin-top:1.5rem;">
+        <!-- LOGIN -->
+        <p class="signup-login">
             Already have an account?
             <a href="{% url 'account_login' %}" class="btn-ghost">Sign in →</a>
         </p>
 
-        <p class="hero-micro" style="margin-top:1rem;">
+        <p class="hero-micro">
             Free forever plan. No credit card required.
         </p>
 
     </div>
 </div>
-
-{% endblock %}

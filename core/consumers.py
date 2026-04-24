@@ -12,7 +12,7 @@ from core.iris_calibration import IrisCalibration
 
 
 
-class ChatConsumer(AsyncWebsocketConsumer):
+class CheatingConsumer(AsyncWebsocketConsumer):
 
     async def connect(self):
         self.calibration = IrisCalibration(50*3)

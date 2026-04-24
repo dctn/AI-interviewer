@@ -720,3 +720,57 @@ footer {
   .price-grid { grid-template-columns:1fr; }
   .testi-grid { grid-template-columns: 1fr; }
 }
+
+/* ===== SIGNUP PAGE IMPROVED SCALE ===== */
+
+.signup-box {
+  max-width: 460px;
+  width: 100%;
+  text-align: center;
+  padding: 1.5rem;
+}
+
+/* Bigger, balanced heading */
+.signup-title {
+  font-size: clamp(36px, 6vw, 56px);
+  line-height: 1.15;
+}
+
+/* Body text more readable */
+.signup-box .hero-body {
+  font-size: 17px;
+}
+
+/* Button feels premium again */
+.signup-btn {
+  width: 100%;
+  display: block;
+  margin-top: 1.8rem;
+  padding: 16px 28px;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+/* Login text */
+.signup-login {
+  margin-top: 1.8rem;
+  font-size: 15px;
+}
+
+/* 📱 Mobile tuning */
+@media (max-width: 480px) {
+
+  .signup-title {
+    font-size: 34px;
+  }
+
+  .signup-box .hero-body {
+    font-size: 15.5px;
+  }
+
+  .signup-btn {
+    padding: 14px 22px;
+    font-size: 15px;
+  }
+
+}
