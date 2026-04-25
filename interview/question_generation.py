@@ -28,5 +28,5 @@ def question_generation(resume,jd,experience_level,difficulty):
         'difficulty':difficulty
     })
 
-    print(question_response)
+    # print(question_response)
     return question_response

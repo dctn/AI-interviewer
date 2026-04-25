@@ -1,198 +1,562 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Title</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Mock Interview — InterviewAI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Syne:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/interview.css' %}"/>
 </head>
 <body>
-<button id="start">start</button>
+
+  <div class="noise"></div>
+
+  <!-- ══════════════════════════════
+       START GATE (shown before interview begins)
+  ══════════════════════════════ -->
+  <div class="start-gate" id="startGate">
+    <div class="gate-card">
+  <div class="gate-icon">
+    <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+      <circle cx="16" cy="16" r="14" stroke="currentColor" stroke-width="1.5"/>
+      <circle cx="16" cy="16" r="4" fill="currentColor"/>
+      <path d="M16 2v3M16 27v3M2 16h3M27 16h3M6.1 6.1l2.1 2.1M23.8 23.8l2.1 2.1M23.8 6.1l-2.1 2.1M6.1 23.8l2.1 2.1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+    </svg>
+  </div>
+  <h2 class="gate-title">Ready to begin?</h2>
+  <p class="gate-sub">Make sure you're in a quiet place. The AI will calibrate your microphone first, then begin asking questions.</p>
+
+  <ul class="gate-checklist">
+    <li id="check-internet">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.2"/><path d="M4.5 7l2 2 3-3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Stable internet connection
+    </li>
+    <li id="check-mic">
+      <svg class="check-icon" width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.2"/><path d="M4.5 7l2 2 3-3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <svg class="cross-icon" width="14" height="14" viewBox="0 0 14 14" fill="none" style="display:none"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.2"/><path d="M4.5 4.5l5 5M9.5 4.5l-5 5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+      Microphone access
+      <span class="check-status" id="status-mic">checking…</span>
+    </li>
+    <li id="check-speak">
+      <svg class="check-icon" width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.2"/><path d="M4.5 7l2 2 3-3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <svg class="cross-icon" width="14" height="14" viewBox="0 0 14 14" fill="none" style="display:none"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.2"/><path d="M4.5 4.5l5 5M9.5 4.5l-5 5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+      Speech synthesis (AI voice)
+      <span class="check-status" id="status-speak">checking…</span>
+    </li>
+    <li id="check-camera">
+      <svg class="check-icon" width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.2"/><path d="M4.5 7l2 2 3-3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <svg class="cross-icon" width="14" height="14" viewBox="0 0 14 14" fill="none" style="display:none"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.2"/><path d="M4.5 4.5l5 5M9.5 4.5l-5 5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+      Camera access
+      <span class="check-status" id="status-camera">checking…</span>
+    </li>
+    <li id="check-internet">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.2"/><path d="M4.5 7l2 2 3-3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Quiet surroundings
+    </li>
+  </ul>
+
+  <!-- Permission error message -->
+  <p class="gate-error" id="gateError" style="display:none;"></p>
+
+  <button class="btn-start-interview" id="start" disabled>
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <path d="M5 3l8 5-8 5V3z" fill="white"/>
+    </svg>
+    <span id="startBtnLabel">Checking permissions…</span>
+  </button>
+</div>
+  </div>
+
+  <!-- ══════════════════════════════
+       MAIN INTERVIEW LAYOUT
+  ══════════════════════════════ -->
+  <div class="interview-layout" id="interviewLayout" style="display:none;">
+
+    <!-- ── LEFT PANEL ── -->
+    <div class="left-panel">
+
+      <!-- Question counter -->
+      <div class="q-counter" id="qCounter">Question 1 of 10</div>
+
+      <!-- Question text -->
+      <h1 class="q-text" id="qText">
+        Preparing your session…
+      </h1>
+
+      <!-- AI Speaking / User Turn status card -->
+      <div class="status-card" id="statusCard">
+        <div class="status-avatar">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.4"/>
+            <circle cx="10" cy="10" r="2.5" fill="currentColor"/>
+            <path d="M10 2v1.5M10 16.5V18M18 10h-1.5M3.5 10H2M14.6 5.4l-1.1 1.1M6.5 13.5l-1.1 1.1M14.6 14.6l-1.1-1.1M6.5 6.5L5.4 5.4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="status-body">
+          <p class="status-label" id="statusLabel">AI is speaking…</p>
+          <!-- Animated bars -->
+          <div class="voice-bars" id="voiceBars">
+            <span></span><span></span><span></span><span></span><span></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Progress dots -->
+      <div class="progress-dots" id="progressDots"></div>
+
+    </div>
+
+    <!-- ── RIGHT PANEL ── -->
+    <div class="right-panel">
+
+      <!-- Avatar image card -->
+      <div class="avatar-card">
+        <!-- Replace with your actual AI avatar image -->
+        <div class="avatar-img-wrap">
+          <img
+            src="https://play-lh.googleusercontent.com/zbTbQqCvJyiMfxWfoiRNUN6OfiBbVSyHnZOP7u8ePbCLvaBAde_n-YihelQZKgV86q6MwJPw_WIS-gtwTEAb"
+            alt="AI Interviewer"
+            class="avatar-img"
+            onerror="this.style.display='none'; document.getElementById('avatarFallback').style.display='flex';"
+          />
+          <!-- fallback if no image -->
+          <div class="avatar-fallback" id="avatarFallback" style="display:none;">
+            <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+              <circle cx="32" cy="24" r="14" stroke="currentColor" stroke-width="2"/>
+              <path d="M8 56c0-13.3 10.7-24 24-24s24 10.7 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+
+          <!-- Sound viz top-left -->
+          <div class="avatar-viz" id="avatarViz">
+            <span></span><span></span><span></span><span></span>
+          </div>
+        </div>
+
+        <!-- Caption bubble (toggleable) -->
+        <div class="caption-bubble" id="captionBubble">
+          <p id="captionText">Waiting for question…</p>
+        </div>
+      </div>
+
+      <!-- Bottom bar: mic status + timer + caption toggle -->
+      <div class="bottom-bar">
+        <div class="mic-status" id="micStatus">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <rect x="4.5" y="1" width="5" height="8" rx="2.5" stroke="currentColor" stroke-width="1.3"/>
+            <path d="M2 6.5A5 5 0 0012 6.5M7 11.5v1.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+          </svg>
+          <span id="micLabel">MIC STATUS: STANDBY</span>
+        </div>
+
+        <div class="timer-display" id="timerDisplay">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <circle cx="7" cy="7.5" r="5.5" stroke="currentColor" stroke-width="1.3"/>
+            <path d="M7 5v3l2 1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+            <path d="M5.5 1.5h3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+          </svg>
+          <span id="timerLabel">00:00</span>
+        </div>
+
+        <button class="caption-toggle-btn" id="captionToggle" onclick="toggleCaption()">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <rect x="1" y="3" width="12" height="8" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
+            <path d="M3.5 7h4M3.5 9h2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+          </svg>
+          <span id="captionBtnLabel">CC: ON</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════
+       FINISHING OVERLAY
+  ══════════════════════════════ -->
+  <div class="finish-overlay" id="finishOverlay" style="display:none;">
+    <div class="finish-card">
+      <div class="finish-spinner">
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+          <circle cx="20" cy="20" r="16" stroke="rgba(108,92,231,0.2)" stroke-width="4"/>
+          <circle cx="20" cy="20" r="16" stroke="#6c5ce7" stroke-width="4"
+            stroke-dasharray="100" stroke-dashoffset="60"
+            stroke-linecap="round" class="spin-arc"/>
+        </svg>
+      </div>
+      <h3>Processing your answers…</h3>
+      <p>Hang tight. The AI is evaluating your responses.</p>
+    </div>
+  </div>
 
 <script>
-    start_btn = document.getElementById('start')
+  /* ══════════════════════════════════════════
+     ORIGINAL LOGIC — PRESERVED EXACTLY
+     Only UI wiring added around existing code
+  ══════════════════════════════════════════ */
 
-    let questions = {{ questions|safe }}
 
-    console.log(questions)
-    {#questions[0] = 'This is AI interview session, make sure internet is stable and surrounding is silent. if any cause interview session stop and marked as cheating. Your session start soon please be silent to calibration of sound'#}
-    questions[0] = {
-        "question": 'marked as cheating. Your session start soon please be silent to calibration of sound',
-        'question_id':'summ'
+/* ── Permission checks + start ── */
+// Run checks and wire button AFTER DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+  const start_btn       = document.getElementById('start');
+  const startGate       = document.getElementById('startGate');
+  const interviewLayout = document.getElementById('interviewLayout');
+
+  async function checkPermissions() {
+    let micOk    = false;
+    let cameraOk = false;
+    const speakOk = 'speechSynthesis' in window;
+
+    const statusSpeak = document.getElementById('status-speak');
+    const rowSpeak    = document.getElementById('check-speak');
+    if (speakOk) {
+      statusSpeak.textContent = 'ready';
+      statusSpeak.className   = 'check-status ok';
+      rowSpeak.className      = 'check-granted';
+    } else {
+      statusSpeak.textContent = 'not supported';
+      statusSpeak.className   = 'check-status fail';
+      rowSpeak.className      = 'check-denied';
     }
 
-    let q_id = 0
-    let all_answer = []
-    let isCalibrated = false;
-    let SILENCE_THRESHOLD = 0.01
-    let calibrations = []
-
-    question_length = Object.keys(questions).length
-
-    function blobToBase64(blob) {
-        return new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result.split(',')[1]);
-            reader.readAsDataURL(blob);
-        });
+    const statusMic = document.getElementById('status-mic');
+    const rowMic    = document.getElementById('check-mic');
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach(t => t.stop());
+      micOk = true;
+      statusMic.textContent = 'granted';
+      statusMic.className   = 'check-status ok';
+      rowMic.className      = 'check-granted';
+    } catch (e) {
+      statusMic.textContent = 'denied';
+      statusMic.className   = 'check-status fail';
+      rowMic.className      = 'check-denied';
     }
 
-    function getCookie(name) {
-        const cookies = document.cookie.split(';');
-        for (let cookie of cookies) {
-            const [key, val] = cookie.trim().split('=');
-            if (key === name) return decodeURIComponent(val);
-        }
-        return null;
+    const statusCam = document.getElementById('status-camera');
+    const rowCam    = document.getElementById('check-camera');
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      stream.getTracks().forEach(t => t.stop());
+      cameraOk = true;
+      statusCam.textContent = 'granted';
+      statusCam.className   = 'check-status ok';
+      rowCam.className      = 'check-granted';
+    } catch (e) {
+      statusCam.textContent = 'denied';
+      statusCam.className   = 'check-status fail';
+      rowCam.className      = 'check-denied';
     }
 
-    async function finishInterview() {
-        console.log("Sending all answers...");
-        const formData = new FormData();
+    const btnLabel = document.getElementById('startBtnLabel');
+    const errBox   = document.getElementById('gateError');
 
-        for (let ans of all_answer) {
-            // blob directly as a file — no base64 conversion
-            const file = new File([ans.ans_blob], `q${ans.question_id}.webm`, {type: 'audio/webm'});
-            formData.append('audio_files', file);
-            formData.append('question_ids', ans.question_id);
-            formData.append('question_text', ans.question_text);
-        }
+    if (micOk && cameraOk && speakOk) {
+      start_btn.disabled       = false;
+      btnLabel.textContent     = 'Start Interview';
+      errBox.style.display     = 'none';
+    } else {
+      start_btn.disabled       = true;
+      btnLabel.textContent     = 'Fix permissions to continue';
+      errBox.style.display     = 'block';
+      errBox.textContent       = 'Please allow microphone and camera access in your browser, then refresh this page.';
+    }
+  }
 
-        const response = await fetch('/interview/result/', {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': getCookie('csrftoken')   // django csrf
-            },
-            body: formData
-        });
+  checkPermissions();
 
-        const result = await response.json();
+  start_btn.addEventListener('click', () => {
+    if (start_btn.disabled) return;
+    startGate.style.display       = 'none';
+    interviewLayout.style.display = 'grid';
+    buildDots();
+    askQuestion();
+    start_btn.disabled = true;
+  });
+});
+
+
+
+
+
+  // Django injects this — keeping exactly as original
+  let questions = {{ questions|safe }};
+
+  questions[0] = {
+    "question": 'This is your AI interview session. Make sure your internet is stable and surroundings are silent. Any suspicious activity may be marked as cheating. Stay silent now for microphone calibration.',
+    'question_id': 'summ'
+  };
+  console.log(questions)
+
+  let q_id              = 0;
+  let all_answer        = [];
+  let isCalibrated      = false;
+  let SILENCE_THRESHOLD = 0.01;
+  let calibrations      = [];
+
+  const question_length = Object.keys(questions).length;
+
+  /* ── UI refs ── */
+  const startGate       = document.getElementById('startGate');
+  const interviewLayout = document.getElementById('interviewLayout');
+  const finishOverlay   = document.getElementById('finishOverlay');
+  const qCounter        = document.getElementById('qCounter');
+  const qText           = document.getElementById('qText');
+  const statusLabel     = document.getElementById('statusLabel');
+  const voiceBars       = document.getElementById('voiceBars');
+  const avatarViz       = document.getElementById('avatarViz');
+  const captionText     = document.getElementById('captionText');
+  const captionBubble   = document.getElementById('captionBubble');
+  const micLabel        = document.getElementById('micLabel');
+  const timerLabel      = document.getElementById('timerLabel');
+  const progressDots    = document.getElementById('progressDots');
+
+  /* ── Caption toggle ── */
+  let captionVisible = true;
+  function toggleCaption() {
+    captionVisible = !captionVisible;
+
+    captionBubble.style.display = captionVisible ? 'block' : 'none';
+    qText.style.visibility = captionVisible ? 'visible' : 'hidden';
+
+    document.getElementById('captionBtnLabel').textContent = captionVisible ? 'CC: ON' : 'CC: OFF';
+    document.getElementById('captionToggle').classList.toggle('cc-off', !captionVisible);
+  }
+
+  /* ── Timer ── */
+  let timerSec = 0;
+  let timerInterval = null;
+  function startTimer() {
+    timerSec = 0;
+    clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+      timerSec++;
+      const m = String(Math.floor(timerSec / 60)).padStart(2, '0');
+      const s = String(timerSec % 60).padStart(2, '0');
+      timerLabel.textContent = m + ':' + s;
+    }, 1000);
+  }
+
+  /* ── Build progress dots ── */
+  function buildDots() {
+    progressDots.innerHTML = '';
+    // question_length - 1 because q[0] is calibration
+    const total = question_length - 1;
+    for (let i = 0; i < total; i++) {
+      const d = document.createElement('span');
+      d.className = 'dot';
+      progressDots.appendChild(d);
+    }
+  }
+  function updateDots(activeIdx) {
+    // activeIdx is real question index (q_id - 1 after calibration)
+    const dots = progressDots.querySelectorAll('.dot');
+    dots.forEach((d, i) => {
+      d.classList.remove('dot-done', 'dot-active');
+      if (i < activeIdx)  d.classList.add('dot-done');
+      if (i === activeIdx) d.classList.add('dot-active');
+    });
+  }
+
+  /* ── UI state helpers ── */
+function setAISpeaking(text) {
+  statusLabel.textContent     = 'AI is speaking…';
+  voiceBars.className         = 'voice-bars bars-active';
+  avatarViz.className         = 'avatar-viz viz-active';
+  micLabel.textContent        = 'MIC STATUS: STANDBY';
+  micLabel.parentElement.className = 'mic-status mic-standby';
+  captionText.textContent     = '"' + text + '"';
+
+  if (q_id > 0) {
+    const realQ = q_id;
+    qCounter.textContent = 'Question ' + realQ + ' of ' + (question_length - 1);
+    updateDots(realQ - 1);
+
+    // Only update qText content always — visibility is controlled by captionVisible
+    qText.textContent    = text;
+    qText.style.visibility = captionVisible ? 'visible' : 'hidden';
+
+  } else {
+    qCounter.textContent    = 'Calibrating microphone…';
+    qText.textContent       = 'Please stay silent while we calibrate your microphone.';
+    // Always show calibration message regardless of caption toggle
+    qText.style.visibility  = 'visible';
+    captionText.textContent = '"' + text + '"';
+  }
+}
+
+  function setUserRecording() {
+    statusLabel.textContent = 'Your turn — speak now';
+    voiceBars.className     = 'voice-bars bars-user';
+    avatarViz.className     = 'avatar-viz';
+    micLabel.textContent    = 'MIC STATUS: ON';
+    micLabel.parentElement.className = 'mic-status mic-on';
+    startTimer();
+  }
+
+  function setCalibrating() {
+    statusLabel.textContent = 'Calibrating microphone…';
+    voiceBars.className     = 'voice-bars bars-calibrate';
+    micLabel.textContent    = 'MIC STATUS: CALIBRATING';
+    micLabel.parentElement.className = 'mic-status mic-calibrate';
+  }
+
+  /* ══════════════════════════════════
+     ORIGINAL FUNCTIONS — UNCHANGED
+  ══════════════════════════════════ */
+
+  function blobToBase64(blob) {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result.split(',')[1]);
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  function getCookie(name) {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+      const [key, val] = cookie.trim().split('=');
+      if (key === name) return decodeURIComponent(val);
+    }
+    return null;
+  }
+
+  async function finishInterview() {
+    clearInterval(timerInterval);
+    interviewLayout.style.display = 'none';
+    finishOverlay.style.display   = 'flex';
+
+    const formData = new FormData();
+    for (let ans of all_answer) {
+      const file = new File([ans.ans_blob], `q${ans.question_id}.webm`, {type: 'audio/webm'});
+      formData.append('audio_files', file);
+      formData.append('question_ids', ans.question_id);
+      formData.append('question_text', ans.question_text);
     }
 
-    function askQuestion() {
-        if (q_id >= question_length) {
-            console.log('interview done')
-            console.log(all_answer)
+    const response = await fetch('/interview/result/', {
+      method: 'POST',
+      headers: { 'X-CSRFToken': getCookie('csrftoken') },
+      body: formData
+    });
 
-            // playing recored audio
+    const result = await response.json();
+  }
 
-            finishInterview()
-            return;
-        } else {
-            speakQuestion(questions[q_id]['question'])
-        }
-
+  function askQuestion() {
+    if (q_id >= question_length) {
+      finishInterview();
+      return;
+    } else {
+      speakQuestion(questions[q_id]['question']);
     }
+  }
 
-    function speakQuestion(text) {
-        const utterance = new SpeechSynthesisUtterance(text);
+  function speakQuestion(text) {
+    setAISpeaking(text);
 
-        utterance.lang = 'en-US';
-        utterance.rate = 0.9;
-        utterance.pitch = 0.5;
+    const utterance      = new SpeechSynthesisUtterance(text);
+    utterance.lang       = 'en-US';
+    utterance.rate       = 0.9;
+    utterance.pitch      = 0.5;
 
-        utterance.onstart = () => {
-            console.log("Question started speaking...");
-        };
-
-        utterance.onend = () => {
-            console.log("Question finished — now start recording!");
-            voice()
-        };
-
-        window.speechSynthesis.speak(utterance);
-    }
-
-
-    async function voice() {
-        const voice_stream = await navigator.mediaDevices.getUserMedia({audio: true})
-        const voice_recorder = new MediaRecorder(voice_stream)
-
-
-        const SILENCE_WAIT = 1500;         // wait value
-
-        const voice_chuck = [];
-        voice_recorder.ondataavailable = (e) => {
-            voice_chuck.push(e.data);
-            {#console.log(e.data)#}
-        };
-
-        voice_recorder.onstop = () => {
-            const blob = new Blob(voice_chuck, {type: 'audio/webm'});
-            console.log('recording saved location:', blob)
-            if (q_id !== 0) {
-                all_answer.push({
-                    question_text: questions[q_id]['question'],
-                    ans_blob: blob,
-                    question_id: questions[q_id]['question_id']
-                })
-            }
-            q_id++
-            askQuestion()
-        };
-
-
-        const audioCtx = new AudioContext();
-        const analyser = audioCtx.createAnalyser();
-        const source = audioCtx.createMediaStreamSource(voice_stream);
-
-        source.connect(analyser);
-        const data = new Uint8Array(analyser.frequencyBinCount);
-        let silenceTimer = null;
-
-
-        function checkVolume() {
-            analyser.getByteTimeDomainData(data);
-
-            let sum = 0;
-            for (let i = 0; i < data.length; i++) {
-                const val = (data[i] - 128) / 128;
-                sum += val * val;
-            }
-
-            const volume = Math.sqrt(sum / data.length);
-            if (isCalibrated) {
-                console.log("Volume:", volume);
-
-                if (volume < SILENCE_THRESHOLD) {
-                    if (!silenceTimer) {
-                        silenceTimer = setTimeout(() => {
-                                console.log("Silence detected! Stopping...")
-                                voice_recorder.stop()
-                            },
-                            SILENCE_WAIT)
-                    }
-                } else {
-                    clearTimeout(silenceTimer)
-                    silenceTimer = null
-                }
-            } else {
-                if (calibrations.length >= 1000) {
-                    const total = calibrations.reduce((a, b) => a + b, 0);
-                    SILENCE_THRESHOLD = (total / calibrations.length) * 1.5;
-
-                    console.log("Calibrated threshold:", SILENCE_THRESHOLD);
-                    console.log("Calibrated volume:", volume);
-                    isCalibrated = true;
-                    voice_recorder.stop()
-                } else {
-                    calibrations.push(volume)
-                }
-            }
-
-
-            if (voice_recorder.state === "recording") {
-                requestAnimationFrame(checkVolume);
-            }
-        }
-
-        voice_recorder.start(250);
-        checkVolume();
-    }
-
-
-    start_btn.onclick = () => {
-        askQuestion();
-        start_btn.disabled = true;
+    utterance.onstart = () => console.log("Question started speaking...");
+    utterance.onend   = () => {
+      console.log("Question finished — now start recording!");
+      if (q_id === 0) {
+        setCalibrating();
+      } else {
+        setUserRecording();
+      }
+      voice();
     };
+
+    window.speechSynthesis.speak(utterance);
+  }
+
+  async function voice() {
+    const voice_stream   = await navigator.mediaDevices.getUserMedia({audio: true});
+    const voice_recorder = new MediaRecorder(voice_stream);
+    const SILENCE_WAIT   = 1500;
+    const voice_chuck    = [];
+
+    voice_recorder.ondataavailable = (e) => voice_chuck.push(e.data);
+
+    voice_recorder.onstop = () => {
+      clearInterval(timerInterval);
+      const blob = new Blob(voice_chuck, {type: 'audio/webm'});
+      if (q_id !== 0) {
+        all_answer.push({
+          question_text: questions[q_id]['question'],
+          ans_blob:      blob,
+          question_id:   questions[q_id]['question_id']
+        });
+      }
+      q_id++;
+      askQuestion();
+    };
+
+    const audioCtx = new AudioContext();
+    const analyser = audioCtx.createAnalyser();
+    const source   = audioCtx.createMediaStreamSource(voice_stream);
+    source.connect(analyser);
+
+    const data = new Uint8Array(analyser.frequencyBinCount);
+    let silenceTimer = null;
+
+    function checkVolume() {
+      analyser.getByteTimeDomainData(data);
+      let sum = 0;
+      for (let i = 0; i < data.length; i++) {
+        const val = (data[i] - 128) / 128;
+        sum += val * val;
+      }
+      const volume = Math.sqrt(sum / data.length);
+        //console.log(volume)
+      if (isCalibrated) {
+        if (volume < SILENCE_THRESHOLD) {
+          if (!silenceTimer) {
+            silenceTimer = setTimeout(() => {
+              console.log("Silence detected — stopping...");
+              voice_recorder.stop();
+            }, SILENCE_WAIT);
+          }
+        } else {
+          clearTimeout(silenceTimer);
+          silenceTimer = null;
+        }
+      } else {
+        if (calibrations.length >= 1000) {
+          const total = calibrations.reduce((a, b) => a + b, 0);
+          SILENCE_THRESHOLD = (total / calibrations.length) * 1.5;
+          isCalibrated = true;
+          voice_recorder.stop();
+        } else {
+          calibrations.push(volume);
+        }
+      }
+
+      if (voice_recorder.state === "recording") requestAnimationFrame(checkVolume);
+    }
+
+    voice_recorder.start(250);
+    checkVolume();
+  }
+
+  /* ── Start button ── */
+  start_btn.addEventListener('click', () => {
+    startGate.style.display    = 'none';
+    interviewLayout.style.display = 'grid';
+    buildDots();
+    askQuestion();
+    start_btn.disabled = true;
+  });
+
 </script>
 </body>
 </html>

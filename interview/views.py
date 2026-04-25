@@ -36,13 +36,14 @@ def interview_setup(request):
     return render(request, 'interview_setup.html', {'form':form})
 
 def interview(request,interview_id):
-    questions = QuestionAndAnswer.objects.filter(interview_id=interview_id).order_by('order_no').values('question_id','question')[:1]
+    questions = QuestionAndAnswer.objects.filter(interview_id=interview_id).order_by('order_no').values('question_id','question')
 
     all_questions = {}
     for i,question in enumerate(questions):
         all_questions[i+1] = {'question':question['question'],"question_id":str(question['question_id'])}
 
-    print(all_questions)
+    # print(questions)
+    # print(all_questions)
     context = {'questions':all_questions}
     return render(request, 'interview.html',context)
 

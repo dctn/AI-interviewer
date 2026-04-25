@@ -3,7 +3,13 @@ from django.contrib import admin
 from interview.models import Interview, QuestionAndAnswer
 
 # Register your models here.
-admin.site.register(Interview)
+class InterviewAdmin(admin.ModelAdmin):
+    model = Interview
+    # fields = ['interview_id']
+    readonly_fields = ['interview_id']
+
+
+admin.site.register(Interview, InterviewAdmin)
 
 class QuestionAdmin(admin.ModelAdmin):
     model = QuestionAndAnswer
