@@ -19,9 +19,9 @@ class ResumeAnalysis(models.Model):
         return f"{str(self.user_id.username)}"
 
     def score(self):
-        if self.report.get('overall_score') >= 80:
+        if self.report.get('overall_score') >= 50:
             return 'high'
-        elif self.report.get('overall_score') >= 50:
+        elif self.report.get('overall_score') >= 21:
             return 'medium'
         else:
             return 'low'

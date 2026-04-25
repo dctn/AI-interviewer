@@ -5,19 +5,26 @@
     <title>Title</title>
 </head>
 <body>
-
+<button id="start">start</button>
 
 <script>
+    start_btn = document.getElementById('start')
 
-    let questions = {
-        1: "Tell me about yourself",
-        2: "What are your strengths?",
+    let questions = {{ questions|safe }}
 
-    };
+    console.log(questions)
+    {#questions[0] = 'This is AI interview session, make sure internet is stable and surrounding is silent. if any cause interview session stop and marked as cheating. Your session start soon please be silent to calibration of sound'#}
+    questions[0] = {
+        "question": 'marked as cheating. Your session start soon please be silent to calibration of sound',
+        'question_id':'summ'
+    }
 
-
-    let q_id = 1
+    let q_id = 0
     let all_answer = []
+    let isCalibrated = false;
+    let SILENCE_THRESHOLD = 0.01
+    let calibrations = []
+
     question_length = Object.keys(questions).length
 
     function blobToBase64(blob) {
@@ -61,7 +68,7 @@
     }
 
     function askQuestion() {
-        if (q_id > question_length) {
+        if (q_id >= question_length) {
             console.log('interview done')
             console.log(all_answer)
 
@@ -70,7 +77,7 @@
             finishInterview()
             return;
         } else {
-            speakQuestion(questions[q_id])
+            speakQuestion(questions[q_id]['question'])
         }
 
     }
@@ -99,7 +106,7 @@
         const voice_stream = await navigator.mediaDevices.getUserMedia({audio: true})
         const voice_recorder = new MediaRecorder(voice_stream)
 
-        const SILENCE_THRESHOLD = 0.01;    // below this = silence
+
         const SILENCE_WAIT = 1500;         // wait value
 
         const voice_chuck = [];
@@ -111,11 +118,13 @@
         voice_recorder.onstop = () => {
             const blob = new Blob(voice_chuck, {type: 'audio/webm'});
             console.log('recording saved location:', blob)
-            all_answer.push({
-                question_text: questions[q_id],
-                ans_blob: blob,
-                question_id: q_id
-            })
+            if (q_id !== 0) {
+                all_answer.push({
+                    question_text: questions[q_id]['question'],
+                    ans_blob: blob,
+                    question_id: questions[q_id]['question_id']
+                })
+            }
             q_id++
             askQuestion()
         };
@@ -129,6 +138,7 @@
         const data = new Uint8Array(analyser.frequencyBinCount);
         let silenceTimer = null;
 
+
         function checkVolume() {
             analyser.getByteTimeDomainData(data);
 
@@ -139,20 +149,35 @@
             }
 
             const volume = Math.sqrt(sum / data.length);
-            console.log("Volume:", volume);
+            if (isCalibrated) {
+                console.log("Volume:", volume);
 
-            if (volume < SILENCE_THRESHOLD) {
-                if (!silenceTimer) {
-                    silenceTimer = setTimeout(() => {
-                            console.log("Silence detected! Stopping...")
-                            voice_recorder.stop()
-                        },
-                        SILENCE_WAIT)
+                if (volume < SILENCE_THRESHOLD) {
+                    if (!silenceTimer) {
+                        silenceTimer = setTimeout(() => {
+                                console.log("Silence detected! Stopping...")
+                                voice_recorder.stop()
+                            },
+                            SILENCE_WAIT)
+                    }
+                } else {
+                    clearTimeout(silenceTimer)
+                    silenceTimer = null
                 }
             } else {
-                clearTimeout(silenceTimer)
-                silenceTimer = null
+                if (calibrations.length >= 1000) {
+                    const total = calibrations.reduce((a, b) => a + b, 0);
+                    SILENCE_THRESHOLD = (total / calibrations.length) * 1.5;
+
+                    console.log("Calibrated threshold:", SILENCE_THRESHOLD);
+                    console.log("Calibrated volume:", volume);
+                    isCalibrated = true;
+                    voice_recorder.stop()
+                } else {
+                    calibrations.push(volume)
+                }
             }
+
 
             if (voice_recorder.state === "recording") {
                 requestAnimationFrame(checkVolume);
@@ -163,7 +188,11 @@
         checkVolume();
     }
 
-    askQuestion()
+
+    start_btn.onclick = () => {
+        askQuestion();
+        start_btn.disabled = true;
+    };
 </script>
 </body>
 </html>

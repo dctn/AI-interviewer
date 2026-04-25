@@ -17,6 +17,7 @@ def dashboard(request):
     context = {"user_data":user_data}
     # print(user_data)
     return render(request, "dashboard.html",context)
+
 @login_required
 def resume_analysis(request):
     if request.method == "POST":

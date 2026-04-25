@@ -45,6 +45,7 @@ INSTALLED_APPS = [
 
     'channels',
     'core.apps.CoreConfig',
+    'interview.apps.InterviewConfig',
 
     'allauth',
     'allauth.account',

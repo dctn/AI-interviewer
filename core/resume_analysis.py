@@ -20,7 +20,7 @@ def llm_resume_analysis(resume,jd_details):
     resume_lower = resume_text.lower()
 
     try:
-        llm_provider = ChatGroq(api_key=settings.GROQ_API_KEY   , model='openai/gpt-oss-120b',temperature=0)
+        llm_provider = ChatGroq(api_key=settings.GROQ_API_KEY, model='openai/gpt-oss-120b',temperature=0)
     except:
         llm_provider = ChatOpenAI(api_key=settings.OPEN_ROUTER_KEY,model='openai/gpt-oss-120b',temperature=0,base_url="https://openrouter.ai/api/v1")
 

@@ -105,7 +105,7 @@
 
                         <!-- Submit -->
                         <div class="submit-row">
-                            <button type="submit" class="btn-analyze" >
+                            <button type="submit" id="submitBtn" class="btn-analyze" >
                                 <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
                                     <circle cx="9" cy="9" r="7" stroke="white" stroke-width="1.5"/>
                                     <path d="M6 9l2 2 4-4" stroke="white" stroke-width="1.5"
@@ -301,10 +301,8 @@
 
             if (length < minLength) {
                 counter.style.color = "#e74c3c"; // red
-                submitBtn.disabled = true
             } else {
                 counter.style.color = "#2ecc71"; // green
-                submitBtn.disabled = false
 
             }
         }

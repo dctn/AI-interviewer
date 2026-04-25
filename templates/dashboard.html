@@ -21,7 +21,7 @@
 <aside class="sidebar" id="sidebar">
 
     <div class="sidebar-top">
-        <a href="index.html" class="s-logo">interview<span>ai</span><span class="s-dot">.</span></a>
+        <a href="{% url 'home' %}" class="s-logo">interview<span>ai</span><span class="s-dot">.</span></a>
     </div>
 
     <nav class="s-nav">
@@ -41,7 +41,7 @@
             </svg>
             Mock Interview
         </a>
-        <a href="#" class="s-item">
+        <a href="{% url 'resume_analysis' %}" class="s-item">
             <svg class="s-icon" viewBox="0 0 20 20" fill="none">
                 <path d="M4 5h12M4 10h8M4 15h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
             </svg>
@@ -108,7 +108,7 @@
     <div class="dash-header">
         <div class="dash-header-left">
             <h1 class="dash-title">Dashboard</h1>
-            <p class="dash-welcome">Welcome back, <strong>Felix</strong>. You have improved your score by <span
+            <p class="dash-welcome">Welcome back, <strong>{{ request.user.username}}</strong>. You have improved your score by <span
                     class="highlight-green">12%</span> this week. Keep going!</p>
         </div>
         <div class="ai-status">

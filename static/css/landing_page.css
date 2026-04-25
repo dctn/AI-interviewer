@@ -774,3 +774,66 @@ footer {
   }
 
 }
+
+
+/* NAV */
+
+
+/* nav */
+/* Hide checkbox */
+#menu-toggle {
+  display: none;
+}
+
+/* Hamburger icon */
+.menu-icon {
+  display: none;
+  flex-direction: column;
+  cursor: pointer;
+  gap: 5px;
+}
+
+.menu-icon span {
+  width: 24px;
+  height: 2px;
+  background: var(--text);
+  display: block;
+  transition: 0.3s;
+}
+
+/* MOBILE */
+@media (max-width: 768px) {
+
+  .menu-icon {
+    display: flex;
+  }
+
+  .nav-right {
+    position: absolute;
+    top: 70px;
+    left: 0;
+    width: 100%;
+    background: var(--bg2);
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 2rem 0;
+    display: none;
+  }
+
+  /* SHOW MENU */
+  #menu-toggle:checked ~ .nav-right {
+    display: flex;
+  }
+
+  /* Override your existing rule */
+  .nav-link {
+    display: block !important;
+    font-size: 16px;
+  }
+
+  .nav-cta {
+    width: 80%;
+    text-align: center;
+  }
+}
