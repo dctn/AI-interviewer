@@ -3,8 +3,45 @@ from django.shortcuts import render, redirect, get_object_or_404
 from core.forms import *
 from core.models import *
 from core.resume_analysis import llm_resume_analysis
-import json
+import numpy as np
+from interview.models import *
+
+
 # Create your views here.
+def interview_score(interview_id):
+    questions = QuestionAndAnswer.objects.filter(interview_id=interview_id)
+
+    overall_score = 0
+    communication = 0
+    depth = 0
+    clarity = 0
+    completeness = 0
+    technical_accuracy = 0
+    relevance = 0
+    verdict = []
+    for question in questions:
+        overall_score += question.analysis_json['overall_score']
+        communication += question.analysis_json['communication']
+        depth += question.analysis_json['depth']
+        clarity += question.analysis_json['clarity']
+        completeness += question.analysis_json['completeness']
+        technical_accuracy += question.analysis_json['technical_accuracy']
+        relevance += question.analysis_json['relevance']
+        verdict.append(question.analysis_json.get('final_verdict', 'unknown'))
+
+    verdict_np = np.array(verdict)
+
+    scores = {
+        'overall_score': overall_score / len(questions),
+        'communication': communication / len(questions),
+        'depth': depth / len(questions),
+        'clarity': clarity / len(questions),
+        'completeness': completeness / len(questions),
+        'technical_accuracy': technical_accuracy / len(questions),
+        'relevance': relevance / len(questions),
+        'verdict': verdict_np[verdict_np.argmax()]
+    }
+    return scores
 
 def cheating(request):
     return render(request, "index.html")
@@ -14,8 +51,24 @@ def home(request):
 
 def dashboard(request):
     user_data = ResumeAnalysis.objects.filter(user_id=request.user)
-    context = {"user_data":user_data}
-    # print(user_data)
+    interview_data = Interview.objects.filter(user_id=request.user)
+    interview_scores = []
+
+    for interview in interview_data:
+        scores = interview_score(interview.interview_id)
+        interview_scores.append({
+            'overall_score':scores['overall_score'],
+            'relevance':scores['relevance'],
+            'verdict':scores['verdict'],
+            'category': interview.resume.name,
+            'interview_id': interview.interview_id,
+            'completed_at':interview.finished_at,
+        })
+
+    context = {"user_data":user_data,
+               "interview_data":interview_data,
+               'interview_scores':interview_scores}
+    print(interview_scores)
     return render(request, "dashboard.html",context)
 
 @login_required

@@ -1,0 +1,83 @@
+
+<!-- ══════════════════════════════
+     SIDEBAR
+══════════════════════════════ -->
+<aside class="sidebar" id="sidebar">
+
+    <div class="sidebar-top">
+        <a href="{% url 'home' %}" class="s-logo">interview<span>ai</span><span class="s-dot">.</span></a>
+    </div>
+
+    <nav class="s-nav">
+        <a href="{% url 'dashboard' %}" class="s-item s-active">
+            <svg class="s-icon" viewBox="0 0 20 20" fill="none">
+                <rect x="2.5" y="2.5" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+                <rect x="11.5" y="2.5" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+                <rect x="2.5" y="11.5" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+                <rect x="11.5" y="11.5" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+            </svg>
+            Dashboard
+        </a>
+        <a href="{% url 'interview_setup' %}" class="s-item">
+            <svg class="s-icon" viewBox="0 0 20 20" fill="none">
+                <circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M10 7v3.5l2.5 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            Mock Interview
+        </a>
+        <a href="{% url 'resume_analysis' %}" class="s-item">
+            <svg class="s-icon" viewBox="0 0 20 20" fill="none">
+                <path d="M4 5h12M4 10h8M4 15h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            Resume Analyzer
+        </a>
+        <a href="#" class="s-item">
+            <svg class="s-icon" viewBox="0 0 20 20" fill="none">
+                <path d="M10 2L12.5 7.5H18L13.5 11L15.5 17L10 13.5L4.5 17L6.5 11L2 7.5H7.5L10 2Z" stroke="currentColor"
+                      stroke-width="1.5" stroke-linejoin="round"/>
+            </svg>
+            Progress
+        </a>
+        <a href="#" class="s-item">
+            <svg class="s-icon" viewBox="0 0 20 20" fill="none">
+                <circle cx="10" cy="7" r="3.5" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M3 17c0-3.3 3.1-6 7-6s7 2.7 7 6" stroke="currentColor" stroke-width="1.5"
+                      stroke-linecap="round"/>
+            </svg>
+            Profile
+        </a>
+    </nav>
+
+    <div class="s-bottom">
+        <div class="s-user">
+            <div class="s-user-info">
+                <span class="s-user-name">{{ request.user }}</span>
+                <span class="s-user-plan">Pro Pack</span>
+            </div>
+        </div>
+        <a href="{% url 'account_logout' %}" class="s-item s-signout">
+            <svg class="s-icon" viewBox="0 0 20 20" fill="none">
+                <path d="M13 3h2.5A1.5 1.5 0 0117 4.5v11A1.5 1.5 0 0115.5 17H13" stroke="currentColor"
+                      stroke-width="1.5" stroke-linecap="round"/>
+                <path d="M8 13l4-3-4-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                      stroke-linejoin="round"/>
+                <path d="M12 10H3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            Sign Out
+        </a>
+    </div>
+
+</aside>
+
+<!-- ══════════════════════════════
+     MOBILE TOP BAR
+══════════════════════════════ -->
+<div class="mob-bar">
+    <a href="index.html" class="s-logo">interview<span>ai</span><span class="s-dot">.</span></a>
+    <button class="hamburger" id="hamburger" aria-label="Open menu">
+        <span></span><span></span><span></span>
+    </button>
+</div>
+
+<!-- overlay for mobile sidebar -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>

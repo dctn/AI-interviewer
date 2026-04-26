@@ -1,0 +1,290 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Interview Report — InterviewAI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Syne:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+          rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/report.css' %}"/>
+</head>
+<body>
+
+<div class="noise"></div>
+
+{% include 'includes/aside.html' %}
+
+<!-- ══════════════════════════════
+     MAIN CONTENT
+══════════════════════════════ -->
+<main class="main">
+
+    <!-- ── PAGE TITLE ── -->
+    <div class="page-top">
+        <div>
+            <div class="breadcrumb"><a href="{% url 'dashboard' %}">Dashboard</a> <span>/</span> Interview Report</div>
+            <h1 class="page-title">AI Evaluation Result</h1>
+            <p class="page-meta">
+                <span class="meta-tag">{{ question.question_domain }}</span>
+                <span class="meta-sep">·</span>
+                <span>{{ question.category }}</span>
+                <span class="meta-sep">·</span>
+                <span>Completed {{ question.created_at|timesince }} ago</span>
+            </p>
+        </div>
+        <div class="page-actions">
+            <a href="{% url 'interview_setup' %}" class="btn-action btn-retake">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path d="M11.5 7A4.5 4.5 0 112.5 7" stroke="currentColor" stroke-width="1.3"
+                          stroke-linecap="round"/>
+                    <path d="M11.5 3.5V7H8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"
+                          stroke-linejoin="round"/>
+                </svg>
+                Retake Interview
+            </a>
+            <button class="btn-action btn-download">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path d="M7 2v7M4 7l3 3 3-3M2 11h10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"
+                          stroke-linejoin="round"/>
+                </svg>
+                Download Report
+            </button>
+        </div>
+    </div>
+
+    <!-- ── OVERALL SCORE HERO ── -->
+    <div class="score-hero">
+        <div class="score-ring-block">
+            <svg class="score-ring-svg" viewBox="0 0 160 160">
+                <circle cx="80" cy="80" r="64" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="10"/>
+                <circle cx="80" cy="80" r="64" fill="none"
+                        stroke="{% if report.overall_score < 20 %}
+                                    #d81537
+                                {% elif report.overall_score < 50 %}
+                                    #d8b415
+                                {% elif report.overall_score >= 80 %}
+                                    #10e11d
+                                {% else %}
+                                    #f59e0b
+                                {% endif %}" stroke-width="10"
+                        stroke-linecap="round"
+                        stroke-dasharray="402"
+                        stroke-dashoffset="calc(402 * (1 - {{ report.overall_score|default:0|floatformat:2 }} / 100))"
+                        transform="rotate(-90 80 80)"
+                        id="overallArc"/>
+                <defs>
+                    <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#f59e0b"/>
+                        <stop offset="100%" stop-color="#fbbf24"/>
+                    </linearGradient>
+                </defs>
+            </svg>
+            <div class="score-ring-center">
+                <span class="score-big" id="overallNum">{{ report.overall_score }}</span>
+                <span class="score-denom">/ 100</span>
+            </div>
+        </div>
+
+        <div class="score-hero-body">
+            <div class="score-level-badge average">{{ report.final_verdict }}</div>
+            {% for suggestion in report.improvement_suggestions %}
+                <p class="score-summary">{{ suggestion }}</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- ── METRIC BREAKDOWN ── -->
+    <div class="section-card">
+        <div class="section-head">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <rect x="1" y="10" width="3" height="5" rx="1" fill="currentColor"/>
+                <rect x="6" y="6" width="3" height="9" rx="1" fill="currentColor"/>
+                <rect x="11" y="2" width="3" height="13" rx="1" fill="currentColor"/>
+            </svg>
+            Metric Breakdown
+        </div>
+        <div class="metrics-grid">
+            <div class="metric-row">
+                <span class="metric-label">Relevance</span>
+                <div class="metric-bar-wrap">
+                    <div class="metric-bar" style="--pct:{{ report.relevance }}%; --clr:#6c5ce7;"></div>
+                </div>
+                <span class="metric-val">{{ report.relevance }}%</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">Technical Accuracy</span>
+                <div class="metric-bar-wrap">
+                    <div class="metric-bar" style="--pct:{{ report.technical_accuracy }}%; --clr:#f59e0b;"></div>
+                </div>
+                <span class="metric-val">{{ report.technical_accuracy }}%</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">Completeness</span>
+                <div class="metric-bar-wrap">
+                    <div class="metric-bar" style="--pct:{{ report.completeness }}%; --clr:#6c5ce7;"></div>
+                </div>
+                <span class="metric-val">{{ report.completeness }}%</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">Clarity</span>
+                <div class="metric-bar-wrap">
+                    <div class="metric-bar" style="--pct:{{ report.clarity }}%; --clr:#f59e0b;"></div>
+                </div>
+                <span class="metric-val">{{ report.clarity }}%</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">Depth</span>
+                <div class="metric-bar-wrap">
+                    <div class="metric-bar" style="--pct:{{ report.depth }}%; --clr:#f87171;"></div>
+                </div>
+                <span class="metric-val">{{ report.depth }}%</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">Communication</span>
+                <div class="metric-bar-wrap">
+                    <div class="metric-bar" style="--pct:{{ report.communication }}%; --clr:#f59e0b;"></div>
+                </div>
+                <span class="metric-val">{{ report.communication }}%</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── STRENGTHS + WEAKNESSES ── -->
+    <div class="sw-grid">
+        <div class="section-card sw-card strengths-card">
+            <div class="section-head green-head">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/>
+                    <path d="M5 8l2.5 2.5 3.5-4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"
+                          stroke-linejoin="round"/>
+                </svg>
+                Strengths
+            </div>
+            <ul class="sw-list">
+                {% for strength in report.strengths %}
+                <li>{{ strength}}</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="section-card sw-card weaknesses-card">
+            <div class="section-head red-head">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M8 2L14 13H2L8 2Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+                    <path d="M8 6v3M8 10.5v.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+                </svg>
+                Weaknesses
+            </div>
+            <ul class="sw-list">
+                {% for weak in report.weaknesses %}
+                <li>{{ weak}}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <!-- ── IMPROVEMENT SUGGESTIONS ── -->
+    <div class="section-card">
+        <div class="section-head">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.3"/>
+                <path d="M8 5v3.5l2 1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+            </svg>
+            Improvement Suggestions
+        </div>
+        <div class="suggest-grid">
+            {% for improvement in report.improvement_suggestions %}
+            <div class="suggest-card">
+                <div class="suggest-num">0{{ forloop.counter }}</div>
+                <h4>{{ improvement }}</h4>
+                <p></p>
+            </div>
+            {% endfor %}
+
+        </div>
+    </div>
+
+
+
+    <!-- ── IDEAL ANSWER ── -->
+    <div class="section-card ideal-card">
+        <div class="ideal-header">
+            <div class="section-head" style="margin-bottom:0;">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M8 1l1.8 3.6L14 5.5l-3 2.9.7 4.1L8 10.4l-3.7 2.1.7-4.1-3-2.9 4.2-.9L8 1z"
+                          stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+                </svg>
+                Ideal Answer
+            </div>
+            <button class="copy-btn" onclick="copyIdeal()">
+                <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+                    <rect x="4" y="4" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.2"/>
+                    <path d="M9 4V2.5A1.5 1.5 0 007.5 1H2.5A1.5 1.5 0 001 2.5v5A1.5 1.5 0 002.5 9H4"
+                          stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+                </svg>
+                Copy
+            </button>
+        </div>
+        <div class="ideal-body" id="idealBody">
+            {{ question.expected_answer }}
+        </div>
+    </div>
+
+</main>
+
+<script>
+    /* Sidebar mobile toggle */
+    const hamburger = document.getElementById('hamburger');
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    hamburger.addEventListener('click', () => {
+        sidebar.classList.add('open');
+        overlay.classList.add('show');
+    });
+    overlay.addEventListener('click', () => {
+        sidebar.classList.remove('open');
+        overlay.classList.remove('show');
+    });
+
+    /* Copy ideal answer */
+    function copyIdeal() {
+        navigator.clipboard.writeText(document.getElementById('idealBody').textContent.trim());
+        const btn = document.querySelector('.copy-btn');
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="4" y="4" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.2"/><path d="M9 4V2.5A1.5 1.5 0 007.5 1H2.5A1.5 1.5 0 001 2.5v5A1.5 1.5 0 002.5 9H4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg> Copy`, 2000);
+    }
+
+    /* Fake audio player */
+    let playing = false;
+    let audioTimer = null;
+    let elapsed = 0;
+    const total = 45;
+
+    function toggleAudio() {
+        playing = !playing;
+        document.getElementById('playIcon').style.display = playing ? 'none' : 'block';
+        document.getElementById('pauseIcon').style.display = playing ? 'block' : 'none';
+        if (playing) {
+            audioTimer = setInterval(() => {
+                elapsed = Math.min(elapsed + 1, total);
+                document.getElementById('audioFill').style.width = (elapsed / total * 100) + '%';
+                const s = elapsed % 60, m = Math.floor(elapsed / 60);
+                document.querySelector('.audio-time').textContent = `${m}:${String(s).padStart(2, '0')} / 0:45`;
+                if (elapsed >= total) {
+                    clearInterval(audioTimer);
+                    playing = false;
+                    document.getElementById('playIcon').style.display = 'block';
+                    document.getElementById('pauseIcon').style.display = 'none';
+                }
+            }, 1000);
+        } else {
+            clearInterval(audioTimer);
+        }
+    }
+</script>
+
+</body>
+</html>

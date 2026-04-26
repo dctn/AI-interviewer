@@ -188,6 +188,7 @@
       </div>
       <h3>Processing your answers…</h3>
       <p>Hang tight. The AI is evaluating your responses.</p>
+        <a href="{% url 'result_page' interview_id %}" class="btn-start-interview">View result page</a>
     </div>
   </div>
 
@@ -207,7 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function checkPermissions() {
     let micOk    = false;
-    let cameraOk = false;
+    let cameraOk = true;
     const speakOk = 'speechSynthesis' in window;
 
     const statusSpeak = document.getElementById('status-speak');
@@ -439,13 +440,13 @@ function setAISpeaking(text) {
       formData.append('question_text', ans.question_text);
     }
 
-    const response = await fetch('/interview/result/', {
+    const response = await fetch('{% url 'result' interview_id %}', {
       method: 'POST',
       headers: { 'X-CSRFToken': getCookie('csrftoken') },
       body: formData
     });
 
-    const result = await response.json();
+    //const result = await response.json();
   }
 
   function askQuestion() {
@@ -558,5 +559,6 @@ function setAISpeaking(text) {
   });
 
 </script>
+
 </body>
 </html>

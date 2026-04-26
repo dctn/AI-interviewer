@@ -1,0 +1,247 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Interview Result — InterviewAI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Syne:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/interview_result.css' %}"/>
+    <link rel="stylesheet" href="{% static 'css/report.css' %}">
+</head>
+<body>
+
+
+  <div class="noise"></div>
+
+  {% include 'includes/aside.html' %}
+  <!-- ══════════════════════
+       MAIN
+  ══════════════════════ -->
+  <main class="main">
+
+    <!-- ── TOP HEADER ── -->
+    <div class="result-header">
+      <div class="result-header-left">
+        <h1 class="result-title">Interview Result Overview</h1>
+        <p class="result-subtitle">AI-generated performance report for <strong>Lead Role</strong></p>
+      </div>
+      <div class="result-header-actions">
+        <a href="{% url 'interview_setup' %}" class="btn-retake">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M11.5 7A4.5 4.5 0 112.5 7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M11.5 3.5V7H8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Retake Interview
+        </a>
+        <button class="btn-download">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2v7M4 7l3 3 3-3M2 11h10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Download Full Report
+        </button>
+      </div>
+    </div>
+
+    <!-- ── CANDIDATE + JD ROW ── -->
+    <div class="info-row">
+
+      <!-- Candidate Card -->
+      <div class="candidate-card">
+        <div class="candidate-top">
+          <div class="candidate-avatar">S</div>
+          <div class="candidate-info">
+            <div class="candidate-name-row">
+              <span class="candidate-name">{{ request.user }}</span>
+              <span class="candidate-type external">External</span>
+            </div>
+            <div class="candidate-meta-row">
+              <span class="candidate-meta-label">Resume:</span>
+              <span class="candidate-meta-val">{{ interview.resume.name }}</span>
+              <a href="{{ interview.resume.path }}" class="meta-link">View</a>
+              <a href="#" class="meta-link">Change</a>
+            </div>
+            <div class="candidate-meta-row">
+              <span class="candidate-meta-label">Experience:</span>
+              <span class="candidate-meta-val">{{ interview.experience }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- JD Card -->
+      <div class="jd-card">
+        <div class="jd-title">Job Description</div>
+        <p class="jd-body">
+            {{ interview.jd }}
+        </p>
+      </div>
+
+    </div>
+
+    <!-- ── STATUS BAR ── -->
+    <div class="status-bar">
+      <div class="status-item">
+        <span class="status-key">Status</span>
+        <span class="status-val status-completed">
+          <span class="status-dot green-dot"></span>{{ interview.status }}
+        </span>
+      </div>
+      <div class="status-item">
+        <span class="status-key">Difficulty</span>
+        <span class="status-val">{{ interview.difficulty }}</span>
+      </div>
+      <div class="status-item">
+        <span class="status-key">Cheating Count</span>
+        <span class="status-val cheat-zero">0</span>
+      </div>
+      <div class="status-item">
+        <span class="status-key">Started At</span>
+        <span class="status-val">{{ interview.started_at }}</span>
+      </div>
+      <div class="status-item">
+        <span class="status-key">Finished At</span>
+        <span class="status-val">{{ interview.finished_at }}</span>
+      </div>
+    </div>
+
+    <!-- ── SCORE + ANALYTICS ROW ── -->
+    <div class="score-analytics-row">
+
+      <!-- Score Block -->
+      <div class="score-block">
+        <div class="score-ring-wrap">
+          <svg class="score-svg" viewBox="0 0 160 160">
+            <circle cx="80" cy="80" r="62" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="12"/>
+            <!-- animated ring — 72% → dashoffset = 390 * (1-0.72) = 109.2 -->
+            <circle cx="80" cy="80" r="62" fill="none"
+              stroke="{% if report.overall_score < 20 %}
+                                    #d81537
+                                {% elif report.overall_score < 50 %}
+                                    #d8b415
+                                {% elif report.overall_score >= 80 %}
+                                    #10e11d
+                                {% else %}
+                                    #f59e0b
+                                {% endif %}" stroke-width="12"
+              stroke-linecap="round"
+              stroke-dasharray="calc(402 * (1 - {{ overall_score|default:0|floatformat:2 }} / 100))"
+               stroke-dashoffset="109"
+              transform="rotate(-90 80 80)" id="mainArc"/>
+            <defs>
+              <linearGradient id="rGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#8b7cf8"/>
+                <stop offset="100%" stop-color="#6c5ce7"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          <div class="score-center">
+            <span class="score-num">{{ overall_score }}%</span>
+            <span class="score-lbl">OVERALL SCORE</span>
+          </div>
+        </div>
+
+        <div class="verdict-block">
+          <div class="verdict-badge strong-badge">VERDICT: {{ verdict }}</div>
+
+
+        </div>
+      </div>
+
+      <!-- Analytics Block -->
+      <div class="analytics-block">
+        <div class="analytics-title">Technical Analytics</div>
+        <div class="analytics-list">
+          <div class="analytic-row">
+            <span class="analytic-label">Average Relevance</span>
+            <div class="analytic-bar-wrap">
+                <div class="metric-bar" style="--pct:{{ relevance }}%; --clr:#f59e0b;"></div>
+            </div>
+            <span class="analytic-val">{{ relevance }}%</span>
+          </div>
+          <div class="analytic-row">
+            <span class="analytic-label">Technical Accuracy</span>
+            <div class="analytic-bar-wrap">
+                <div class="metric-bar" style="--pct:{{ technical_accuracy }}%; --clr:#8b7cf8;"></div>
+            </div>
+            <span class="analytic-val">{{ technical_accuracy }}%</span>
+          </div>
+          <div class="analytic-row">
+            <span class="analytic-label">Completeness</span>
+            <div class="analytic-bar-wrap">
+                <div class="metric-bar" style="--pct:{{ completeness }}%; --clr:#f59e0b;"></div>
+            </div>
+            <span class="analytic-val">{{ completeness }}%</span>
+          </div>
+          <div class="analytic-row">
+            <span class="analytic-label">Clarity</span>
+            <div class="analytic-bar-wrap">
+                <div class="metric-bar" style="--pct:{{ clarity }}%; --clr:#6c5ce7;"></div>
+            </div>
+            <span class="analytic-val">{{ clarity }}%</span>
+          </div>
+          <div class="analytic-row">
+            <span class="analytic-label">Depth</span>
+            <div class="analytic-bar-wrap">
+                <div class="metric-bar" style="--pct:{{ depth }}%; --clr:#f87171;"></div>
+            </div>
+            <span class="analytic-val">{{ depth }}%</span>
+          </div>
+          <div class="analytic-row">
+            <span class="analytic-label">Communication</span>
+            <div class="analytic-bar-wrap">
+                <div class="metric-bar" style="--pct:{{ communication }}%; --clr:#2dd4a0;"></div>
+            </div>
+            <span class="analytic-val">{{ communication }}%</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── QUESTION-WISE ANALYSIS ── -->
+    <div class="qa-section">
+      <div class="qa-section-header">
+        <span class="qa-section-title">Question-wise Analysis</span>
+        <span class="qa-total">{{ questions|length }} Total Questions</span>
+      </div>
+
+      <div class="qa-table">
+      {% for question in questions %}
+      <a href="{% url 'question_result' question.question_id %}" class="qa-row">
+        <span class="qa-num">Q{{ forloop.counter }}</span>
+        <span class="qa-text">{{ question.question }}</span>
+        <div class="qa-right">
+          <span class="verdict-chip strong-chip">{{ question.analysis_json.final_verdict }}</span>
+          <span class="qa-score">{{ question.analysis_json.overall_score }}%</span>
+          <svg class="qa-arrow" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M4 7h6M7 4l3 3-3 3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+      </a>
+{% endfor %}
+
+</div>
+    </div>
+
+  </main>
+
+  <script>
+    /* Sidebar mobile */
+    const hamburger = document.getElementById('hamburger');
+    const sidebar   = document.getElementById('sidebar');
+    const overlay   = document.getElementById('sidebarOverlay');
+    hamburger.addEventListener('click', () => { sidebar.classList.add('open'); overlay.classList.add('show'); document.body.style.overflow='hidden'; });
+    overlay.addEventListener('click',   () => { sidebar.classList.remove('open'); overlay.classList.remove('show'); document.body.style.overflow=''; });
+
+    /* Q&A accordion */
+    function toggleDetail(id) {
+      const el = document.getElementById(id);
+      const isOpen = el.classList.contains('open');
+      // close all
+      document.querySelectorAll('.qa-detail').forEach(d => d.classList.remove('open'));
+      document.querySelectorAll('.qa-row').forEach(r => r.classList.remove('qa-row-active'));
+      if (!isOpen) {
+        el.classList.add('open');
+        el.previousElementSibling.classList.add('qa-row-active');
+      }
+    }
+  </script>
+
+</body>
+</html>

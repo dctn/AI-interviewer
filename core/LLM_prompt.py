@@ -60,7 +60,6 @@ Start with '{{' and end with '}}'.
 DO NOT include any tags like </resume> or preamble text.
 """)
 
-
 PROMPT_keyword = ChatPromptTemplate.from_template(
     """Extract all technical skills, tools, frameworks,
             and domain keywords from this job description.
@@ -85,7 +84,6 @@ Resume: {resume}
 
 Be extremely specific. Never use vague terms like "programming languages" — always name them explicitly.
 """)
-
 
 from langchain_core.prompts import ChatPromptTemplate
 
@@ -184,4 +182,84 @@ CRITICAL RULES:
 - MUST generate exactly 5 questions
 
 If output is not valid JSON, the system will fail.
+""")
+
+PROMPT_ANSWER_EVAL_BATCH = ChatPromptTemplate.from_template("""
+You are a strict technical interviewer.
+
+You will receive MULTIPLE question-answer pairs.
+
+Evaluate EACH pair independently and return structured JSON.
+
+INPUT:
+{qa_list}
+
+EVALUATION RULES:
+
+1. RELEVANCE
+- Is the answer directly addressing the question?
+- If mostly unrelated → relevance < 40
+
+2. TECHNICAL ACCURACY
+- Check correctness of concepts
+- Penalize wrong or misleading statements heavily
+
+3. COMPLETENESS
+- Partial answers should not score above 60
+- Full answers must include key concepts
+
+4. CLARITY
+- Logical flow and understandable explanation
+
+5. DEPTH
+- Superficial answers → < 50
+- Strong detailed answers → > 70
+
+6. COMMUNICATION
+- Based on structure and clarity (ignore grammar perfection)
+
+STRICT SCORING RULES:
+- If answer is irrelevant → overall_score <= 40
+- If technically wrong → overall_score <= 50
+- If strong in all → overall_score >= 75
+
+SPECIAL CASE:
+If answer is:
+- too short (< 10 words)
+- empty
+- "I don't know"
+
+→ overall_score = 0–20
+
+OUTPUT FORMAT (STRICT JSON ONLY):
+
+[
+  {{
+    "question_id": "<id>",
+        "analysis_report":{{
+        "relevance": <0-100>,
+        "technical_accuracy": <0-100>,
+        "completeness": <0-100>,
+        "clarity": <0-100>,
+        "depth": <0-100>,
+        "communication": <0-100>,
+        "overall_score": <0-100>,
+    
+        "strengths": ["..."],
+        "weaknesses": ["..."],
+        "improvement_suggestions": ["..."],
+        "expected_answer": "<ideal answer>",
+    
+        "final_verdict": "Strong | Average | Weak"
+        }}
+  }}
+]
+
+CRITICAL:
+- Return ONLY JSON ARRAY
+- Each object MUST include its original question_id
+- Do NOT skip any question
+- No explanation outside JSON
+- No markdown
+- No extra text
 """)
