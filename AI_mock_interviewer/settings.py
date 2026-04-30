@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'channels',
     'core.apps.CoreConfig',
     'interview.apps.InterviewConfig',
+    'payment.apps.PaymentConfig',
 
     'allauth',
     'allauth.account',
@@ -162,3 +163,19 @@ MEDIA_ROOT = os.path.join(BASE_DIR,"media")
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 OPEN_ROUTER_KEY = os.getenv("OPEN_ROUTER")
+
+USE_TZ = True
+TIME_ZONE = "Asia/Kolkata"
+
+
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        "SCOPE": [
+            "profile",
+            "email",
+        ],
+        "AUTH_PARAMS": {
+            "access_type": "online",
+        }
+    }
+}

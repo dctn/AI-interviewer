@@ -67,7 +67,7 @@ def answer_evaluation(interview_id):
             'qa_list':question_batch,
         }))
 
-    print(answer_batch)
+    # print(answer_batch)
     # storing result of question and answer
     for answer in answer_batch:
         question = get_object_or_404(QuestionAndAnswer, question_id=answer['question_id'])

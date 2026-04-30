@@ -9,16 +9,24 @@ from interview.forms import InterviewForm
 from interview.models import *
 from django.utils import timezone
 from core.views import interview_score
+from payment.models import Wallet
+
 
 # Create your views here.
 @login_required
 def interview_setup(request):
-    if request.method == 'POST':
+    user_wallet = get_object_or_404(Wallet, user=request.user)
+    credit_status = None
+
+    if request.method == 'POST' and user_wallet.interview_credits >=1:
         form = InterviewForm(request.POST,request.FILES)
         if form.is_valid():
             data = form.save(commit=False)
             data.user = request.user
             data.save()
+
+            user_wallet.interview_credits -=1
+            user_wallet.save()
 
             # question generation
             questions = question_generation(data.resume.path,data.jd,data.experience,data.difficulty)
@@ -33,12 +41,15 @@ def interview_setup(request):
 
             return redirect('interview',data.interview_id)
     else:
+        if user_wallet.interview_credits <= 0:
+            credit_status = 'insufficient_credits'
         form = InterviewForm()
 
-    return render(request, 'interview_setup.html', {'form':form})
+    return render(request, 'interview_setup.html', {'form':form,'credit_status':credit_status})
 
 def interview(request,interview_id):
     interview_ = get_object_or_404(Interview,interview_id=interview_id)
+
     interview_.status = 'in_progress'
     interview_.started_at = timezone.now()
     interview_.save()
@@ -82,13 +93,14 @@ def result(request,interview_id):
 
 def result_page(request,interview_id):
     interview_ = get_object_or_404(Interview, interview_id=interview_id)
+
     if interview_.status == 'completed':
         questions = QuestionAndAnswer.objects.filter(interview_id=interview_id)
 
         scores = interview_score(interview_id)
 
         context = {
-            'status': 'in_progress',
+            'status': 'completed',
             'questions': questions,
             'interview': interview_,
         }

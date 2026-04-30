@@ -5,7 +5,7 @@ from core.models import *
 from core.resume_analysis import llm_resume_analysis
 import numpy as np
 from interview.models import *
-
+from payment.models import *
 
 # Create your views here.
 def interview_score(interview_id):
@@ -49,9 +49,12 @@ def cheating(request):
 def home(request):
     return render(request, "landing_page.html")
 
+@login_required
 def dashboard(request):
     user_data = ResumeAnalysis.objects.filter(user_id=request.user)
-    interview_data = Interview.objects.filter(user_id=request.user)
+    interview_data = Interview.objects.filter(user_id=request.user,status__exact='completed')
+    user_wallet = get_object_or_404(Wallet, user=request.user)
+
     interview_scores = []
 
     for interview in interview_data:
@@ -67,18 +70,25 @@ def dashboard(request):
 
     context = {"user_data":user_data,
                "interview_data":interview_data,
-               'interview_scores':interview_scores}
-    print(interview_scores)
+               'interview_scores':interview_scores,
+               'wallet':user_wallet,}
+    # print(interview_scores)
     return render(request, "dashboard.html",context)
 
 @login_required
 def resume_analysis(request):
-    if request.method == "POST":
+    user_wallet = get_object_or_404(Wallet, user=request.user)
+    credit_status = None
+
+    if request.method == "POST" and user_wallet.resume_credits >= 1:
         form = ResumeForm(request.POST,request.FILES)
         if form.is_valid():
             data = form.save(commit=False)
             data.user_id = request.user
             data.save()
+
+            user_wallet.resume_credits -= 1
+            user_wallet.save()
 
             result,jd = llm_resume_analysis(data.resume.path,data.jd)
             # print(data.resume,data.jd)
@@ -88,9 +98,11 @@ def resume_analysis(request):
             data.save()
             return redirect('resume_result',data.analysis_id)
     else:
+        if user_wallet.resume_credits <= 0:
+            credit_status = 'insufficient_credits'
         form = ResumeForm()
 
-    context = {"form":form}
+    context = {"form":form,'credit_status': credit_status}
     return render(request,'resume_analysis.html',context)
 
 def resume_result(request,analysis_id):

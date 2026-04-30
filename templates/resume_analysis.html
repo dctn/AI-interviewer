@@ -74,7 +74,7 @@
                             <div class="form-col">
                                 <div class="field-label-row">
                                     <label class="field-label" for="jobDescription">Job Description</label>
-                                    <span class="optional-note">Optional but recommended</span>
+                                    <span class="optional-note"></span>
 
                                 </div>
                                 <p id="jd-counter" class="char-counter">0 / 150 characters</p>
@@ -105,6 +105,7 @@
 
                         <!-- Submit -->
                         <div class="submit-row">
+                            {% if credit_status != 'insufficient_credits' %}
                             <button type="submit" id="submitBtn" class="btn-analyze" >
                                 <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
                                     <circle cx="9" cy="9" r="7" stroke="white" stroke-width="1.5"/>
@@ -113,6 +114,9 @@
                                 </svg>
                                 Analyze Resume
                             </button>
+                                {% else %}
+                                <a href="" class="btn-start-interview">Insufficient Credits</a>
+                                {% endif %}
                             <p class="submit-note">Results are private and never stored.</p>
                         </div>
 

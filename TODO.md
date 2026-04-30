@@ -1,0 +1,2 @@
+- [ ] LLM cost tracking and request
+- [ ] payment system and wallet method 

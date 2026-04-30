@@ -4,9 +4,7 @@ from langchain_core.output_parsers import JsonOutputParser, StrOutputParser
 from langchain_groq import ChatGroq
 from core.LLM_prompt import *
 from django.conf import settings
-from langchain_huggingface import HuggingFaceEmbeddings
-from sklearn.metrics.pairwise import cosine_similarity
-import numpy as np
+
 
 
 def llm_resume_analysis(resume,jd_details):
@@ -20,13 +18,15 @@ def llm_resume_analysis(resume,jd_details):
     resume_lower = resume_text.lower()
 
     try:
-        llm_provider = ChatGroq(api_key=settings.GROQ_API_KEY, model='openai/gpt-oss-120b',temperature=0)
+        gpt_120b = ChatGroq(api_key=settings.GROQ_API_KEY, model='openai/gpt-oss-120b',temperature=0)
+        gpt_20b = ChatGroq(api_key=settings.GROQ_API_KEY, model='openai/gpt-oss-20b')
     except:
-        llm_provider = ChatOpenAI(api_key=settings.OPEN_ROUTER_KEY,model='openai/gpt-oss-120b',temperature=0,base_url="https://openrouter.ai/api/v1")
+        gpt_120b = ChatOpenAI(api_key=settings.OPEN_ROUTER_KEY,model='openai/gpt-oss-120b',temperature=0,base_url="https://openrouter.ai/api/v1")
+        gpt_20b = ChatOpenAI(api_key=settings.OPEN_ROUTER_KEY,model='openai/gpt-oss-20b',temperature=0,base_url="https://openrouter.ai/api/v1")
 
 
-    jd_chain = PROMPT_jd | llm_provider | str_parser
-    keyword_chain = PROMPT_keyword | llm_provider | json_parser
+    jd_chain = PROMPT_jd | gpt_20b | str_parser
+    keyword_chain = PROMPT_keyword | gpt_120b | json_parser
 
     jd = jd_chain.invoke({'detail':jd_details,'resume':resume_text})
 
@@ -46,7 +46,7 @@ def llm_resume_analysis(resume,jd_details):
     kw_score = round((len(matched_keyword) / len(keywords)) * 100, 2) if keywords else 0
 
 
-    chain = PROMPT_resume_analysis | llm_provider | json_parser
+    chain = PROMPT_resume_analysis | gpt_120b | json_parser
 
     response = chain.invoke({
         "resume": resume_text,

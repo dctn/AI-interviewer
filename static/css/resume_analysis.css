@@ -761,3 +761,26 @@ footer {
     text-align: center;
   }
 }
+
+
+
+.btn-start-interview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 14px;
+  background: var(--purple);
+  color: #fff;
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  margin-top: 0.25rem;
+  box-shadow: 0 4px 24px var(--purple-glow);
+  transition: opacity 0.2s, transform 0.15s;
+  text-decoration: none;
+}

@@ -13,7 +13,16 @@
 </head>
 <body>
 
+    {% if status != 'completed' %}
+    <div id="loading-screen">
+        <div class="loader-box">
+            <div class="spinner"></div>
+            <p>Analyzing your result...</p>
+            <a href="#" onclick="location.reload(); return false;" class="btn-start-interview">View result</a>
+        </div>
 
+    </div>
+    {% endif %}
   <div class="noise"></div>
 
   {% include 'includes/aside.html' %}
