@@ -1,2 +1,4 @@
-- [ ] LLM cost tracking and request
-- [ ] payment system and wallet method 
+- [x] LLM cost tracking and request
+- [x] payment system and wallet method 
+- [ ] Vendor system
+- [ ] Profile system

@@ -88,6 +88,14 @@ def resume_analysis(request):
             data.save()
 
             user_wallet.resume_credits -= 1
+
+            Transaction.objects.create(
+                user=request.user,
+                credits=1,
+                transaction_type="debit",
+                category="resume"
+            )
+
             user_wallet.save()
 
             result,jd = llm_resume_analysis(data.resume.path,data.jd)

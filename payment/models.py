@@ -14,12 +14,6 @@ class Wallet(models.Model):
     def __str__(self):
         return self.user.username
 
-class Payment(models.Model):
-    payment_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    amount_paid = models.PositiveIntegerField(default=0)
-    signature_id = models.CharField(max_length=255, default="")
-    paid_at = models.DateTimeField(auto_now_add=True)
 
 TRANSACTION_TYPE_CHOICES = [
     ('credit','Credit'),
@@ -38,3 +32,28 @@ class Transaction(models.Model):
     transaction_type = models.CharField(max_length=255, choices=TRANSACTION_TYPE_CHOICES)
     category = models.CharField(max_length=255, choices=TRANSACTION_CATEGORY_CHOICES)
     transaction_at = models.DateTimeField(auto_now_add=True)
+
+
+class Plan(models.Model):
+    plan_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=255)
+    amount = models.PositiveIntegerField(default=0)
+    interview_credits = models.PositiveIntegerField(default=0)
+    resume_credits = models.PositiveIntegerField(default=0)
+
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+
+class Payment(models.Model):
+    payment_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    amount_paid = models.PositiveIntegerField(default=0)
+    signature_id = models.CharField(max_length=255, default="")
+    plan = models.ForeignKey(Plan, on_delete=models.SET_NULL,null=True)
+    is_paid = models.BooleanField(default=False)
+    paid_at = models.DateTimeField(auto_now_add=True)

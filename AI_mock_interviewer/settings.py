@@ -39,11 +39,11 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'daphne',
+    # 'daphne',
     'django.contrib.staticfiles',
 
 
-    'channels',
+    # 'channels',
     'core.apps.CoreConfig',
     'interview.apps.InterviewConfig',
     'payment.apps.PaymentConfig',
@@ -94,7 +94,7 @@ AUTHENTICATION_BACKENDS = [
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
-ASGI_APPLICATION = "AI_mock_interviewer.asgi.application"
+# ASGI_APPLICATION = "AI_mock_interviewer.asgi.application"
 WSGI_APPLICATION = 'AI_mock_interviewer.wsgi.application'
 
 
@@ -179,3 +179,8 @@ SOCIALACCOUNT_PROVIDERS = {
         }
     }
 }
+
+CASHFREE_CLIENT_ID = os.getenv("cashfree_client_id")
+CASHFREE_CLIENT_SECRET = os.getenv("CASHFREE_CLIENT_SECRET")
+CASHFREE_ENVIRONMENT = os.getenv("CASHFREE_ENV")
+CASHFREE_CALLBACK_URL = "payment_verify"

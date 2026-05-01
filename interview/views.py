@@ -9,7 +9,7 @@ from interview.forms import InterviewForm
 from interview.models import *
 from django.utils import timezone
 from core.views import interview_score
-from payment.models import Wallet
+from payment.models import Wallet, Transaction
 
 
 # Create your views here.
@@ -26,6 +26,14 @@ def interview_setup(request):
             data.save()
 
             user_wallet.interview_credits -=1
+
+            Transaction.objects.create(
+                user=request.user,
+                credits=1,
+                transaction_type="debit",
+                category="interview"
+            )
+
             user_wallet.save()
 
             # question generation
