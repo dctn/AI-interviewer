@@ -256,6 +256,7 @@ def coupon_page(request):
     return render(request, 'coupon_redeem.html')
 
 
+
 def apply_coupon(request):
     data = json.loads(request.body)
     coupon_id = data.get("coupon_id")
