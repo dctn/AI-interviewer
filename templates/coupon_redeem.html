@@ -1,0 +1,308 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Redeem Coupon — Synthetix AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Syne:wght@400;500;600&display=swap" rel="stylesheet" />
+  <!-- 1. Base design system -->
+  <link rel="stylesheet" href="{% static 'css/dashboard.css' %}" />
+  <!-- 2. Page-specific styles -->
+  <link rel="stylesheet" href="{% static 'css/coupon_redeem.css' %}" />
+</head>
+<body>
+
+  <!-- Grain overlay -->
+  <div class="noise"></div>
+
+  <!-- ═══════════════════════════════
+       SIDEBAR
+  ═══════════════════════════════ -->
+  {% include 'includes/aside.html' %}
+
+  <!-- Sidebar overlay (mobile) -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- ═══════════════════════════════
+       TOPBAR
+  ═══════════════════════════════ -->
+  <header class="topbar">
+    <!-- Mobile hamburger -->
+    <button class="hamburger mob-bar" id="menuBtn" style="display:none" aria-label="Open menu">
+      <span></span><span></span><span></span>
+    </button>
+
+    <div class="topbar-search">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" placeholder="Search documentation..." />
+    </div>
+
+    <div class="topbar-right">
+      <button class="topbar-icon" title="Notifications">
+        <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      </button>
+      <button class="topbar-icon" title="History">
+        <svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.65"/></svg>
+      </button>
+      <button class="topbar-icon" title="Help">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </button>
+      <div class="topbar-user">
+        <div class="topbar-user-info">
+          <span class="topbar-user-name">Alex Rivera</span>
+          <span class="topbar-user-plan">Pro Developer</span>
+        </div>
+        <div class="topbar-avatar">AR</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════════════
+       MAIN
+  ═══════════════════════════════ -->
+  <main class="main">
+    <div class="redeem-page">
+
+      <!-- Page heading -->
+      <div class="redeem-heading">
+        <h1 class="redeem-title">Redeem Coupon</h1>
+        <p class="redeem-sub">Enter your code to unlock interview credits or premium access. Enhance your AI workflow with exclusive rewards.</p>
+      </div>
+
+      <!-- Input card -->
+      <div class="redeem-card">
+        <div class="redeem-icon-wrap">
+          <!-- ticket / coupon icon -->
+          <svg viewBox="0 0 24 24">
+            <path d="M2 9a1 1 0 0 1 1-1h1a2 2 0 1 0 0-4H3a1 1 0 0 0-1 1v2"/>
+            <path d="M22 9a1 1 0 0 0-1-1h-1a2 2 0 1 1 0-4h1a1 1 0 0 1 1 1v2"/>
+            <path d="M2 15a1 1 0 0 0 1 1h1a2 2 0 1 1 0 4H3a1 1 0 0 1-1-1v-2"/>
+            <path d="M22 15a1 1 0 0 1-1 1h-1a2 2 0 1 0 0 4h1a1 1 0 0 0 1-1v-2"/>
+            <line x1="9" y1="2" x2="9" y2="22"/>
+            <line x1="15" y1="2" x2="15" y2="22"/>
+            <rect x="2" y="9" width="20" height="6" rx="0"/>
+          </svg>
+        </div>
+
+        <h2 class="redeem-card-title">Enter Your Code</h2>
+
+        <div class="redeem-input-group">
+          <input
+            type="text"
+            class="redeem-input"
+            id="couponInput"
+            placeholder="Enter coupon code (e.g. ABCD1234)"
+            autocomplete="off"
+            autocapitalize="characters"
+            spellcheck="false"
+          />
+          <button class="btn-apply" id="applyBtn" onclick="applyCoupon()">
+            <span id="applyBtnText">Apply Coupon</span>
+            <svg id="applyArrow" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            <span class="spinner" id="applySpinner" style="display:none"></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ── FEEDBACK SECTION (shown after attempt) ── -->
+      <div class="feedback-section" id="feedbackSection" style="display:none">
+
+        <!-- Success alert -->
+        <div class="alert alert-success" id="alertSuccess">
+          <div class="alert-icon">
+            <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          </div>
+          <div class="alert-body">
+            <span class="alert-title">Coupon Applied Successfully!</span>
+            <span class="alert-desc" id="successDesc">20 Credits added to your account.</span>
+          </div>
+        </div>
+
+        <!-- Error alert -->
+        <div class="alert alert-error" id="alertError">
+          <div class="alert-icon">
+            <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          </div>
+          <div class="alert-body">
+            <span class="alert-title">Invalid coupon code</span>
+            <span class="alert-desc">Please check the code and try again or contact support.</span>
+          </div>
+        </div>
+
+        <!-- Confirmed plan card (only on success) -->
+        <div class="confirmed-card" id="confirmedCard">
+          <div class="confirmed-card-top">
+            <div>
+              <div class="confirmed-eyebrow">Redemption Confirmed</div>
+              <div class="confirmed-plan-name" id="plan_name">Pro Plan Access</div>
+            </div>
+            <div class="confirmed-status-pill">
+              <span class="confirmed-status-dot"></span>
+              Active
+            </div>
+          </div>
+
+          <div class="confirmed-meta">
+            <div class="confirmed-meta-cell">
+              <span class="confirmed-meta-label">Benefit</span>
+              <span class="confirmed-meta-value benefit" id="confirmedBenefit">+20 Interview Credits</span>
+            </div>
+            <div class="confirmed-meta-cell">
+              <span class="confirmed-meta-label">Expiry</span>
+              <span class="confirmed-meta-value" id="confirmedExpiry">30 May 2026</span>
+            </div>
+          </div>
+
+          <div class="confirmed-card-footer">
+            <a href="{% url 'dashboard' %}" class="btn-dashboard">
+              Go to Dashboard
+              <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            </a>
+          </div>
+        </div>
+
+      </div><!-- /feedback-section -->
+
+      <!-- Help footer -->
+      <p class="redeem-help">
+        Need help? Browse our most common <a href="/faq">coupon questions</a>.
+      </p>
+
+    </div>
+  </main>
+
+  <!-- ═══════════════════════════════
+       JAVASCRIPT
+  ═══════════════════════════════ -->
+<script>
+  const input        = document.getElementById('couponInput');
+  const applyBtn     = document.getElementById('applyBtn');
+  const applyText    = document.getElementById('applyBtnText');
+  const applyArrow   = document.getElementById('applyArrow');
+  const applySpinner = document.getElementById('applySpinner');
+  const feedbackSec  = document.getElementById('feedbackSection');
+  const alertSuccess = document.getElementById('alertSuccess');
+  const alertError   = document.getElementById('alertError');
+  const confirmedCard= document.getElementById('confirmedCard');
+  const successDesc  = document.getElementById('successDesc');
+  const benefitEl    = document.getElementById('confirmedBenefit');
+  const expiryEl     = document.getElementById('confirmedExpiry');
+
+  const APPLY_URL = "{% url 'apply_coupon' %}"; // update if different
+
+  function getCSRFToken() {
+    return document.cookie.split('; ')
+      .find(row => row.startsWith('csrftoken='))
+      ?.split('=')[1];
+  }
+
+  input.addEventListener('input', () => {
+    const pos = input.selectionStart;
+    input.value = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    input.setSelectionRange(pos, pos);
+    input.classList.remove('input-error', 'input-success');
+    hideAll();
+  });
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') applyCoupon();
+  });
+
+  function hideAll() {
+    alertSuccess.classList.remove('show');
+    alertError.classList.remove('show');
+    confirmedCard.classList.remove('show');
+    feedbackSec.style.display = 'none';
+  }
+
+  function showLoading(on) {
+    applyBtn.classList.toggle('loading', on);
+    applyText.style.display = on ? 'none' : '';
+    applyArrow.style.display = on ? 'none' : '';
+    applySpinner.style.display = on ? 'block' : 'none';
+  }
+
+  function applyCoupon() {
+    const code = input.value.trim();
+    if (!code) {
+      input.focus();
+      return;
+    }
+
+    showLoading(true);
+
+    fetch(APPLY_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCSRFToken()
+      },
+      body: JSON.stringify({
+        coupon_id: code
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      showLoading(false);
+      feedbackSec.style.display = 'flex';
+
+      if (data.success) {
+        // Success UI
+        successDesc.textContent = "Coupon applied successfully!";
+        benefitEl.textContent = `+${{ data.wallet.interview_credits }} Interview Credits`;
+        expiryEl.textContent = "Activated";
+
+        alertSuccess.classList.add('show');
+        alertError.classList.remove('show');
+        confirmedCard.classList.add('show');
+
+        input.classList.add('input-success');
+        input.classList.remove('input-error');
+
+        document.getElementById('plan_name').innerText = data.coupon.plan_name
+          benefitEl.innerHTML = `${data.coupon.interview_credits} Interview Credits <br> ${data.coupon.resume_credits} Resume Credits`
+      } else {
+        // Error UI
+        alertError.textContent = data.data || "Invalid coupon";
+        alertError.classList.add('show');
+        alertSuccess.classList.remove('show');
+        confirmedCard.classList.remove('show');
+
+        input.classList.add('input-error');
+        input.classList.remove('input-success');
+      }
+
+      feedbackSec.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    })
+    .catch(err => {
+      showLoading(false);
+      alertError.textContent = "Server error. Try again.";
+      alertError.classList.add('show');
+      console.error(err);
+    });
+  }
+
+  /* Sidebar (unchanged) */
+  const sidebar         = document.getElementById('sidebar');
+  const sidebarOverlay  = document.getElementById('sidebarOverlay');
+  const menuBtn         = document.getElementById('menuBtn');
+
+  function openSidebar()  {
+    sidebar.classList.add('open');
+    sidebarOverlay.classList.add('show');
+  }
+
+  function closeSidebar() {
+    sidebar.classList.remove('open');
+    sidebarOverlay.classList.remove('show');
+  }
+
+  if (menuBtn) menuBtn.addEventListener('click', openSidebar);
+  sidebarOverlay.addEventListener('click', closeSidebar);
+</script>
+
+</body>
+</html>

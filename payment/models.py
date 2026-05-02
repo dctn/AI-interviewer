@@ -57,3 +57,23 @@ class Payment(models.Model):
     plan = models.ForeignKey(Plan, on_delete=models.SET_NULL,null=True)
     is_paid = models.BooleanField(default=False)
     paid_at = models.DateTimeField(auto_now_add=True)
+
+class Vendor(models.Model):
+    vendor_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+
+    resume_plan_keys = models.PositiveIntegerField(default=0)
+    interviewer_plan_keys = models.PositiveIntegerField(default=0)
+    pro_plan_keys = models.PositiveIntegerField(default=0)
+
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+
+class Coupon(models.Model):
+    coupon_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE)
+    claimed_user = models.ForeignKey(User, on_delete=models.CASCADE,null=True, blank=True)
+    plan = models.ForeignKey(Plan, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)

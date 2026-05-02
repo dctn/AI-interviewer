@@ -1,9 +1,10 @@
+import json
 import os
 
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.conf import settings
 from django.urls import reverse
 from django.db import transaction
@@ -21,7 +22,7 @@ load_dotenv()
 
 Cashfree.XClientId = settings.CASHFREE_CLIENT_ID
 Cashfree.XClientSecret = settings.CASHFREE_CLIENT_SECRET
-Cashfree.XEnvironment =  Cashfree.SANDBOX
+Cashfree.XEnvironment = Cashfree.SANDBOX
 x_api_version = "2023-08-01"
 
 
@@ -33,6 +34,7 @@ def calculate_total_charge(product_price, cashfree_fee_pct, gst_pct):
     total_charge = product_price / (1 - fee_rate)
 
     return round(total_charge, 2)
+
 
 @login_required
 def checkout(request, plan_id):
@@ -48,13 +50,13 @@ def checkout(request, plan_id):
     context = {
         'plan': plan,
         'total_amount': total_amount,
-        'extra_fee': round(total_amount - plan.amount,2),
+        'extra_fee': round(total_amount - plan.amount, 2),
         'env': env_,
     }
     return render(request, 'checkout.html', context)
 
 
-def process_order(request,plan_id):
+def process_order(request, plan_id):
     plan = Plan.objects.get(plan_id=plan_id)
     payment = Payment.objects.create(
         user=request.user,
@@ -69,7 +71,7 @@ def process_order(request,plan_id):
         callback_url = OrderMeta(
             return_url=request.build_absolute_uri(
                 reverse(settings.CASHFREE_CALLBACK_URL)) + "?order_id={order_id}".replace("http://",
-                                                                                           "https://")
+                                                                                          "https://")
         )
     else:
         callback_url = OrderMeta(
@@ -97,8 +99,7 @@ def process_order(request,plan_id):
         None
     )
 
-    return JsonResponse({"payment_session_id":response.data.payment_session_id})
-
+    return JsonResponse({"payment_session_id": response.data.payment_session_id})
 
 
 @csrf_exempt
@@ -116,7 +117,7 @@ def payment_verify(request):
     try:
         order = Payment.objects.select_related("user", "plan").get(payment_id=cashfree_order_id)
     except Payment.DoesNotExist:
-        return redirect('payment_success',payment_id=cashfree_order_id,)
+        return redirect('payment_success', payment_id=cashfree_order_id, )
 
     # 3️⃣ Verify with Cashfree
     response = Cashfree(XEnvironment=Cashfree.XEnvironment).PGFetchOrder(
@@ -128,25 +129,22 @@ def payment_verify(request):
     # print("Cashfree Response:", response.data)
 
     if response.data.order_status != "PAID":
-        return redirect('payment_success',payment_id=cashfree_order_id,)
-
+        return redirect('payment_success', payment_id=cashfree_order_id, )
 
     # 4️⃣ Prevent duplicate crediting
     if order.is_paid:
-        return redirect('payment_success',payment_id=cashfree_order_id,)
-
+        return redirect('payment_success', payment_id=cashfree_order_id, )
 
     # 5️⃣ Atomic transaction (CRITICAL)
     with transaction.atomic():
 
         # Lock wallet row
-        wallet= Wallet.objects.get(user=order.user)
+        wallet = Wallet.objects.get(user=order.user)
 
         # Mark order paid
         order.is_paid = True
         order.signature_id = response.data.cf_order_id
         order.save()
-
 
         # Add credits to wallet
         wallet.interview_credits += order.plan.interview_credits
@@ -169,12 +167,10 @@ def payment_verify(request):
         )
 
     # 6️⃣ Success response
-    return redirect('payment_success',payment_id=cashfree_order_id,)
+    return redirect('payment_success', payment_id=cashfree_order_id, )
 
 
-
-
-def payment_success(request,payment_id):
+def payment_success(request, payment_id):
     payment = Payment.objects.get(payment_id=payment_id)
     user_wallet = Wallet.objects.get(user=request.user)
     is_success = False
@@ -193,3 +189,109 @@ def payment_success(request,payment_id):
         'user_wallet': user_wallet,
     }
     return render(request, "payment_success.html", context)
+
+
+@login_required
+def vendor_page(request):
+    try:
+        vendor = get_object_or_404(Vendor, user=request.user)
+        coupon_codes = Coupon.objects.filter(vendor=vendor)
+
+        context = {
+            'coupon_codes': coupon_codes,
+        }
+        return render(request, "vendor_page.html", context)
+    except Vendor.DoesNotExist:
+        return redirect('home')
+
+
+def generate_coupon(request):
+    data = json.loads(request.body)
+    plan_id = data.get("plan_id")
+    plan = Plan.objects.get(plan_id=plan_id)
+    vendor = Vendor.objects.get(user=request.user)
+    is_token_limited = False
+
+    # vendor keys verification and key reduce
+    if plan.name == 'interviewer':
+        if vendor.interviewer_plan_keys <= 0:
+            is_token_limited = True
+        else:
+            vendor.interviewer_plan_keys -= 1
+
+    elif plan.name == 'resume analyer':
+        if vendor.resume_plan_keys <= 0:
+            is_token_limited = True
+        else:
+            vendor.resume_plan_keys -= 1
+
+    elif plan.name == 'pro':
+        if vendor.pro_plan_keys <= 0:
+            is_token_limited = True
+        else:
+            vendor.pro_plan_keys -= 1
+
+    if vendor and vendor.is_active and not is_token_limited:
+        coupon = Coupon.objects.create(
+            plan=plan,
+            vendor=vendor,
+        )
+        vendor.save()
+        context = {
+            'success': True,
+            'code': coupon.coupon_id,
+        }
+    elif is_token_limited:
+        context = {
+            'success': False,
+            'data': "You don't enough coupons",
+        }
+    else:
+        context = {'data': None, 'success': False}
+
+    return JsonResponse(context)
+
+
+def coupon_page(request):
+    return render(request, 'coupon_redeem.html')
+
+
+def apply_coupon(request):
+    data = json.loads(request.body)
+    coupon_id = data.get("coupon_id")
+
+    try:
+        coupon = Coupon.objects.get(coupon_id=coupon_id)
+    except Coupon.DoesNotExist:
+        return JsonResponse({'success': False, 'data': "Coupon does not exist"})
+
+    wallet = Wallet.objects.get(user=request.user)
+
+    if not coupon.claimed_user:
+        coupon.claimed_user = request.user
+        wallet.interview_credits += coupon.plan.interview_credits
+        wallet.resume_credits += coupon.plan.resume_credits
+        wallet.save()
+        coupon.save()
+        context = {
+            'success': True,
+            'code': coupon.coupon_id,
+            'wallet': {
+                'interview_credits': wallet.interview_credits,
+                'resume_credits': wallet.resume_credits,
+            },
+
+            'coupon': {
+                'id': coupon.coupon_id,
+                'plan_name': coupon.plan.name,
+                'interview_credits': coupon.plan.interview_credits,
+                'resume_credits': coupon.plan.resume_credits,
+            }
+        }
+    else:
+        context = {
+            'success': False,
+            'data': "You coupon already redeemed ",
+        }
+
+    return JsonResponse(context)

@@ -1,7 +1,6 @@
 from django.contrib import admin
 
-from payment.models import Payment, Transaction, Wallet, Plan
-
+from payment.models import *
 # Register your models here.
 admin.site.register(Payment)
 admin.site.register(Transaction)
@@ -12,3 +11,5 @@ class PlanAdmin(admin.ModelAdmin):
     readonly_fields = ['plan_id']
 
 admin.site.register(Plan, PlanAdmin)
+admin.site.register(Vendor)
+admin.site.register(Coupon)

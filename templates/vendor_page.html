@@ -1,0 +1,356 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Coupons — VendorPortal</title>
+
+    <!-- Fonts (same as dashboard.css) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Syne:wght@400;500;600;700&display=swap"
+          rel="stylesheet"/>
+
+    <!-- Global design system -->
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}"/>
+    <link rel="stylesheet" href="{% static 'css/vendor_page.css' %}"/>
+
+    <!-- ═══════════════════════════════════
+         COUPON PAGE — SCOPED STYLES
+    ═══════════════════════════════════ -->
+
+</head>
+<body>
+
+<!-- NOISE GRAIN -->
+<div class="noise" aria-hidden="true"></div>
+
+<!-- ── SIDEBAR ──────────────────────────────────────── -->
+{% include 'includes/aside.html' %}
+
+<!-- Mobile bar -->
+<div class="mob-bar">
+    <button class="hamburger" id="hamBtn" aria-label="Open menu">
+        <span></span><span></span><span></span>
+    </button>
+    <span style="font-family:var(--serif);font-size:17px;">VendorPortal</span>
+    <div class="s-avatar" style="width:30px;height:30px;font-size:11px;">VP</div>
+</div>
+<div class="sidebar-overlay" id="overlay"></div>
+
+<!-- ── MAIN ─────────────────────────────────────────── -->
+<main class="main">
+
+    <!-- PAGE HEADER -->
+    <div class="dash-header">
+        <div>
+            <div class="ai-status" style="margin-bottom:.75rem;">
+                <div class="ai-dot"></div>
+                Live AI Processing
+            </div>
+            <h1 class="dash-title">Create Plan Coupon</h1>
+            <p class="dash-welcome">
+                Select a plan to generate promotional codes. Your AI-driven platform will automatically
+                track claims and conversion metrics for each campaign.
+            </p>
+        </div>
+    </div>
+
+    <!-- ── CONFIGURE + INTEL ────────────────────────── -->
+    <div class="coupon-layout" id="configSection">
+
+        <!-- LEFT: Configure + Generated Code -->
+        <div style="display:flex;flex-direction:column;gap:1.25rem;">
+
+            <!-- Configure Panel -->
+            <div class="configure-panel">
+                <div class="panel-title">Configure Coupon</div>
+
+                <!-- Plan select -->
+                <div>
+                    <div class="field-label">Select Plan</div>
+                    <select class="c-select" id="planSelect">
+                        <option value="4264bb84-30dc-4da8-b6eb-9a4b75911448">Pro Plan</option>
+                        <option value="e72e3496-03b3-4842-88f2-9bf75d003e17">Resume Analyzer</option>
+                        <option value="234a8a2a-7fbf-4a6d-9bff-f7adb8782658">Interviewer</option>
+                    </select>
+                </div>
+
+
+                <!-- AI logic -->
+                <div>
+                    <div class="field-label">Coupon Logic</div>
+                    <div class="ai-logic-box">
+                        <div class="ai-logic-icon">✦</div>
+                        <div class="ai-logic-text">
+                            AI will suggest a high-conversion code string based on current market trends and your plan's
+                            user segment.
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn-generate" id="generateBtn" onclick="generateCoupon()">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                    </svg>
+                    Generate Coupon
+                </button>
+            </div>
+
+            <!-- Generated Code Reveal -->
+            <div class="code-reveal" id="codeReveal">
+                <div class="code-reveal-title">Generated Coupon Code</div>
+
+                <div class="generated-code-box">
+                    <div id="codeDisplay">
+                        <div class="code-empty">
+                            <div class="code-empty-icon">🎫</div>
+                            <div class="code-empty-text">No code generated yet.<br/>Configure and click Generate.</div>
+                        </div>
+                    </div>
+                    <button class="btn-copy" id="mainCopyBtn" onclick="copyCode()" style="display:none;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                             stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="9" y="9" width="13" height="13" rx="2"/>
+                            <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+                        </svg>
+                        Copy
+                    </button>
+                </div>
+
+
+            </div>
+
+        </div><!-- /LEFT -->
+
+
+    </div><!-- /coupon-layout -->
+
+    <!-- ── ACTIVE PROMOTIONS ─────────────────────────── -->
+    <div class="section-header">
+        <div class="section-title">Active Promotions</div>
+        <div class="section-actions">
+            <button class="btn-sm">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                     stroke-linejoin="round">
+                    <line x1="4" y1="6" x2="11" y2="6"/>
+                    <line x1="4" y1="12" x2="11" y2="12"/>
+                    <line x1="4" y1="18" x2="11" y2="18"/>
+                    <path d="M15 7l5 5-5 5"/>
+                </svg>
+                Filter
+            </button>
+            <button class="btn-sm">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                     stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                Export CSV
+            </button>
+        </div>
+    </div>
+
+    <div class="promo-card">
+        <table class="promo-table">
+            <thead>
+            <tr>
+                <th>Code</th>
+                <th>Plan</th>
+                <th>Claimed By</th>
+                <th>Status</th>
+            </tr>
+            </thead>
+            <tbody>
+
+            <!-- Row 1 -->
+            {% for coupon_code in coupon_codes %}
+
+                <tr>
+                    {#  code #}
+                    <td>
+                        <div class="code-chip">
+                            {{ coupon_code.coupon_id }}
+                            <button class="btn-copy-inline" onclick="copyInline(this, '{{ coupon_code.coupon_id }}')" title="Copy code">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                                     stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="9" y="9" width="13" height="13" rx="2"/>
+                                    <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </td>
+                    {# plan #}
+
+                    <td><span class="plan-pill">{{ coupon_code.plan.name }} Plan</span></td>
+                    <td>
+                        <div class="claimers-wrap">
+                            <div class="claimer-row">
+                                <span class="claimer-name">{{ coupon_code.claimed_user }}</span>
+                            </div>
+                        </div>
+                    </td>
+                    {% if coupon_code.claimed_user %}
+                        <td><span class="status-badge badge-expired"><span class="s-dot"></span>Expired</span></td>
+                    {% else %}
+                        <td><span class="status-badge badge-active"><span class="s-dot"></span>Active</span></td>
+                    {% endif %}
+
+
+                </tr>
+
+            {% endfor %}
+
+            </tbody>
+        </table>
+
+        <div class="promo-footer">
+            <span class="promo-count">Showing 4 promotional codes</span>
+            <div class="pagination">
+                <button class="page-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
+                         stroke-linejoin="round">
+                        <polyline points="15 18 9 12 15 6"/>
+                    </svg>
+                </button>
+                <button class="page-btn active">1</button>
+                <button class="page-btn">2</button>
+                <button class="page-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
+                         stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+</main><!-- /main -->
+
+
+<!-- ── SCRIPTS ─────────────────────────────────────── -->
+<script>
+    /* Sidebar mobile toggle */
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('overlay');
+    const hamBtn = document.getElementById('hamBtn');
+
+    hamBtn.addEventListener('click', () => {
+        sidebar.classList.toggle('open');
+        overlay.classList.toggle('show');
+    });
+    overlay.addEventListener('click', () => {
+        sidebar.classList.remove('open');
+        overlay.classList.remove('show');
+    });
+
+
+    // get coupon code
+    function getCookie(name) {
+        let cookieValue = null;
+
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+
+            for (let cookie of cookies) {
+                cookie = cookie.trim();
+
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(
+                        cookie.substring(name.length + 1)
+                    );
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    async function generateCoupon() {
+        const plan = document.getElementById("planSelect").value;
+
+        const response = await fetch("{% url 'generate_coupon' %}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": getCookie("csrftoken")
+            },
+            body: JSON.stringify({
+                plan_id: plan
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+
+            // 🔹 Show generated code
+            document.getElementById("codeDisplay").innerHTML = `
+        <div class="generated-code">
+            ${data.code}
+        </div>
+    `;
+
+            // 🔹 Show copy button
+            const copyBtn = document.getElementById("mainCopyBtn");
+            copyBtn.style.display = "flex";
+
+            // 🔹 Store code for copy
+            copyBtn.setAttribute("data-code", data.code);
+
+
+            /* Button feedback */
+            const btn = document.getElementById('generateBtn');
+            btn.innerHTML = `✔ Generated!`;
+            btn.style.background = 'var(--green)';
+
+            setTimeout(() => {
+                btn.innerHTML = `Generate Coupon`;
+                btn.style.background = '';
+            }, 2000);
+        } else {
+            document.getElementById("codeDisplay").innerHTML =
+                `<p>${data.data}</p>`;
+        }
+    }
+
+
+    /* Copy main code */
+    function copyCode() {
+        const btn = document.getElementById('mainCopyBtn');
+        const code = btn.dataset.code;
+        if (!code) return;
+        navigator.clipboard.writeText(code).catch(() => {
+        });
+        btn.classList.add('copied');
+        btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><polyline points="20 6 9 17 4 12"/></svg> Copied!`;
+        setTimeout(() => {
+            btn.classList.remove('copied');
+            btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy`;
+        }, 2000);
+    }
+
+    /* Copy inline table code */
+    function copyInline(btn, code) {
+        navigator.clipboard.writeText(code).catch(() => {
+        });
+        btn.classList.add('copied');
+        btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+        setTimeout(() => {
+            btn.classList.remove('copied');
+            btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>`;
+        }, 2000);
+    }
+
+    /* Scroll to config section */
+    function scrollToConfig(e) {
+        e.preventDefault();
+        document.getElementById('configSection').scrollIntoView({behavior: 'smooth'});
+    }
+</script>
+
+</body>
+</html>
