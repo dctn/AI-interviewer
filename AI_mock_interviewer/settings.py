@@ -18,7 +18,6 @@ load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
@@ -29,7 +28,6 @@ SECRET_KEY = 'django-insecure-l_geoswhk8tba0#5$@!hi_49s+27uxcee)h_wb9z0&we^1!2ga
 DEBUG = True
 
 ALLOWED_HOSTS = []
-
 
 # Application definition
 
@@ -42,7 +40,6 @@ INSTALLED_APPS = [
     # 'daphne',
     'django.contrib.staticfiles',
 
-
     # 'channels',
     'core.apps.CoreConfig',
     'interview.apps.InterviewConfig',
@@ -53,6 +50,7 @@ INSTALLED_APPS = [
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
 
+    'storages',
 ]
 
 MIDDLEWARE = [
@@ -88,7 +86,6 @@ TEMPLATES = [
     },
 ]
 
-
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
@@ -97,16 +94,26 @@ AUTHENTICATION_BACKENDS = [
 # ASGI_APPLICATION = "AI_mock_interviewer.asgi.application"
 WSGI_APPLICATION = 'AI_mock_interviewer.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
+
+
+import dj_database_url
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.parse(
+        os.environ.get('NEON_DB_URL'),
+        conn_max_age=600,
+        ssl_require=True,
+    )
 }
+#
 
 
 # Password validation
@@ -127,7 +134,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 
@@ -139,16 +145,13 @@ USE_I18N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 
 STATIC_URL = 'static/'
-STATICFILES_DIRS = [ BASE_DIR / "static" ]
+STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
-
-
 
 SOCIALACCOUNT_LOGIN_ON_GET = True
 ACCOUNT_LOGOUT_ON_GET = True
@@ -157,16 +160,11 @@ ACCOUNT_LOGIN_CANCEL_REDIRECT_URL = '/'
 ACCOUNT_SOCIALACCOUNT_LOGIN_CANCELLED_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = 'home'
 
-
-MEDIA_URL = "media/"
-MEDIA_ROOT = os.path.join(BASE_DIR,"media")
-
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 OPEN_ROUTER_KEY = os.getenv("OPEN_ROUTER")
 
 USE_TZ = True
 TIME_ZONE = "Asia/Kolkata"
-
 
 SOCIALACCOUNT_PROVIDERS = {
     "google": {
@@ -184,3 +182,32 @@ CASHFREE_CLIENT_ID = os.getenv("cashfree_client_id")
 CASHFREE_CLIENT_SECRET = os.getenv("CASHFREE_CLIENT_SECRET")
 CASHFREE_ENVIRONMENT = os.getenv("CASHFREE_ENV")
 CASHFREE_CALLBACK_URL = "payment_verify"
+AI_CREDITS_API = os.getenv("AI_CREDITS_API")
+
+# azure blob setup
+
+AZURE_ACCOUNT_NAME = os.getenv('AZURE_ACCOUNT_NAME')
+AZURE_ACCOUNT_KEY = os.getenv('AZURE_ACCOUNT_KEY')
+AZURE_ACCOUNT_CONNECTION_STRING = os.getenv('AZURE_ACCOUNT_CONNECTION_STRING')
+AZURE_ACCOUNT_CONTAINER = os.getenv('AZURE_ACCOUNT_CONTAINER')
+
+# MEDIA_URL = "media/"
+# MEDIA_ROOT = os.path.join(BASE_DIR,"media")
+
+
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.azure_storage.AzureStorage",
+        "OPTIONS": {
+            "account_name": AZURE_ACCOUNT_NAME,
+            "account_key": AZURE_ACCOUNT_KEY,
+            "azure_container": AZURE_ACCOUNT_CONTAINER,
+            "overwrite_files": False,
+        },
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+
+}
+MEDIA_URL = f'https://{AZURE_ACCOUNT_NAME}.blob.core.windows.net/{AZURE_ACCOUNT_CONTAINER}/'

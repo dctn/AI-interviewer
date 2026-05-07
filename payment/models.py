@@ -35,7 +35,7 @@ class Transaction(models.Model):
 
 
 class Plan(models.Model):
-    plan_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    plan_id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     name = models.CharField(max_length=255)
     amount = models.PositiveIntegerField(default=0)
     interview_credits = models.PositiveIntegerField(default=0)

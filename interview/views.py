@@ -37,7 +37,7 @@ def interview_setup(request):
             user_wallet.save()
 
             # question generation
-            questions = question_generation(data.resume.path,data.jd,data.experience,data.difficulty)
+            questions = question_generation(data.resume,data.jd,data.experience,data.difficulty)
             for i,question in enumerate(questions['questions']):
                 QuestionAndAnswer.objects.create(
                     question=question['question'],

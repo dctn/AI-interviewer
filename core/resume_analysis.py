@@ -4,11 +4,18 @@ from langchain_core.output_parsers import JsonOutputParser, StrOutputParser
 from langchain_groq import ChatGroq
 from core.LLM_prompt import *
 from django.conf import settings
-
+import tempfile
 
 
 def llm_resume_analysis(resume,jd_details):
-    pdf_loader = PyPDFLoader(file_path=resume)
+
+    resume.open('rb')
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_file:
+        temp_file.write(resume.read())
+        temp_path = temp_file.name
+
+    pdf_loader = PyPDFLoader(file_path=temp_path)
+
     json_parser = JsonOutputParser()
     str_parser = StrOutputParser()
 
@@ -17,20 +24,34 @@ def llm_resume_analysis(resume,jd_details):
     resume_text = "\n".join(resume_data).strip()
     resume_lower = resume_text.lower()
 
+
+    gpt_120b = ChatGroq(api_key=settings.GROQ_API_KEY, model='openai/gpt-oss-120b', temperature=0)
+    gpt_20b = ChatGroq(api_key=settings.GROQ_API_KEY, model='openai/gpt-oss-20b')
+
+    # AI credits
+    gpt_mini = ChatOpenAI(api_key=settings.AI_CREDITS_API, model='gpt-4o-mini', temperature=0,
+                          streaming=True, base_url='https://api.aicredits.in/v1')
+    # open router
+    # gpt_120b = ChatOpenAI(api_key=settings.OPEN_ROUTER_KEY,model='openai/gpt-oss-120b',temperature=0,base_url="https://openrouter.ai/api/v1")
+    # gpt_20b = ChatOpenAI(api_key=settings.OPEN_ROUTER_KEY,model='openai/gpt-oss-20b',temperature=0,base_url="https://openrouter.ai/api/v1")
+
+
+
     try:
-        gpt_120b = ChatGroq(api_key=settings.GROQ_API_KEY, model='openai/gpt-oss-120b',temperature=0)
-        gpt_20b = ChatGroq(api_key=settings.GROQ_API_KEY, model='openai/gpt-oss-20b')
+        jd_chain = PROMPT_jd | gpt_20b | str_parser
+        jd = jd_chain.invoke({'detail':jd_details,'resume':resume_text})
     except:
-        gpt_120b = ChatOpenAI(api_key=settings.OPEN_ROUTER_KEY,model='openai/gpt-oss-120b',temperature=0,base_url="https://openrouter.ai/api/v1")
-        gpt_20b = ChatOpenAI(api_key=settings.OPEN_ROUTER_KEY,model='openai/gpt-oss-20b',temperature=0,base_url="https://openrouter.ai/api/v1")
+        jd_chain = PROMPT_jd | gpt_mini | str_parser
+        jd = jd_chain.invoke({'detail': jd_details, 'resume': resume_text})
 
 
-    jd_chain = PROMPT_jd | gpt_20b | str_parser
-    keyword_chain = PROMPT_keyword | gpt_120b | json_parser
+    try:
+        keyword_chain = PROMPT_keyword | gpt_120b | json_parser
+        keyword = keyword_chain.invoke({'jd':jd})
+    except:
+        keyword_chain = PROMPT_keyword | gpt_mini | json_parser
+        keyword = keyword_chain.invoke({'jd':jd})
 
-    jd = jd_chain.invoke({'detail':jd_details,'resume':resume_text})
-
-    keyword = keyword_chain.invoke({'jd':jd})
     keywords = [key.lower().strip() for key in keyword]
 
     def is_match(kw, text):
@@ -46,19 +67,30 @@ def llm_resume_analysis(resume,jd_details):
     kw_score = round((len(matched_keyword) / len(keywords)) * 100, 2) if keywords else 0
 
 
-    chain = PROMPT_resume_analysis | gpt_120b | json_parser
-
-    response = chain.invoke({
-        "resume": resume_text,
-        "jd": jd,
-        "keyword": keyword,
-        "kw_score": kw_score,
-        "matched_count": len(matched_keyword),
-        "total_keywords": len(keyword),
-        "matched_keywords": matched_keyword,
-        "missing_keywords": mis_matched_keyword,
-    })
-
+    try:
+        chain = PROMPT_resume_analysis | gpt_120b | json_parser
+        response = chain.invoke({
+            "resume": resume_text,
+            "jd": jd,
+            "keyword": keyword,
+            "kw_score": kw_score,
+            "matched_count": len(matched_keyword),
+            "total_keywords": len(keyword),
+            "matched_keywords": matched_keyword,
+            "missing_keywords": mis_matched_keyword,
+        })
+    except:
+        chain = PROMPT_resume_analysis | gpt_mini | json_parser
+        response = chain.invoke({
+            "resume": resume_text,
+            "jd": jd,
+            "keyword": keyword,
+            "kw_score": kw_score,
+            "matched_count": len(matched_keyword),
+            "total_keywords": len(keyword),
+            "matched_keywords": matched_keyword,
+            "missing_keywords": mis_matched_keyword,
+        })
 
 
     return response,jd

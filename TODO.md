@@ -1,4 +1,6 @@
 - [x] LLM cost tracking and request
 - [x] payment system and wallet method 
-- [ ] Vendor system
+- [x] Vendor system
+- [ ] cloud media server
+- [ ] cloud database server
 - [ ] Profile system

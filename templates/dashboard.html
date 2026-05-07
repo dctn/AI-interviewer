@@ -81,6 +81,7 @@
 
         {% for analysis in user_data %}
             <!-- Card 1 -->
+            {% if analysis %}
             <div class="bento-card">
                 <div class="card-top-row">
                     <span class="badge badge-ats">ATS Score</span>
@@ -93,6 +94,7 @@
                     <a href="{% url 'resume_result' analysis.analysis_id %}" class="card-link">View Analysis →</a>
                 </div>
             </div>
+            {% endif %}
         {% endfor %}
 
         <!-- Card 3 — wide, career progression -->

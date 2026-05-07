@@ -51,7 +51,7 @@ def home(request):
 
 @login_required
 def dashboard(request):
-    user_data = ResumeAnalysis.objects.filter(user_id=request.user)
+    user_data = ResumeAnalysis.objects.filter(user_id=request.user,).exclude(report={})
     interview_data = Interview.objects.filter(user_id=request.user,status__exact='completed')
     user_wallet = get_object_or_404(Wallet, user=request.user)
 
@@ -98,7 +98,7 @@ def resume_analysis(request):
 
             user_wallet.save()
 
-            result,jd = llm_resume_analysis(data.resume.path,data.jd)
+            result,jd = llm_resume_analysis(data.resume,data.jd)
             # print(data.resume,data.jd)
             data.jd = jd
             data.report = result
