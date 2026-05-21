@@ -110,14 +110,24 @@ WSGI_APPLICATION = 'AI_mock_interviewer.wsgi.application'
 
 import dj_database_url
 
-DATABASES = {
-    'default': dj_database_url.parse(
-        os.environ.get('NEON_DB_URL'),
-        conn_max_age=600,
-        ssl_require=True,
-    )
-}
-#
+# Use remote DB when provided, otherwise fall back to local sqlite for dev.
+NEON_DB_URL = os.environ.get('NEON_DB_URL')
+if NEON_DB_URL:
+    DATABASES = {
+        'default': dj_database_url.parse(
+            NEON_DB_URL,
+            conn_max_age=600,
+            ssl_require=True,
+        )
+    }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+
 
 
 # Password validation
@@ -199,7 +209,7 @@ AZURE_ACCOUNT_CONTAINER = os.getenv('AZURE_ACCOUNT_CONTAINER')
 # MEDIA_ROOT = os.path.join(BASE_DIR,"media")
 
 
-STORAGES = {
+azure_storages = {
     "default": {
         "BACKEND": "storages.backends.azure_storage.AzureStorage",
         "OPTIONS": {
@@ -214,4 +224,12 @@ STORAGES = {
     },
 
 }
-MEDIA_URL = f'https://{AZURE_ACCOUNT_NAME}.blob.core.windows.net/{AZURE_ACCOUNT_CONTAINER}/'
+
+# In development prefer local filesystem storage to avoid network latency.
+if DEBUG:
+    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+    MEDIA_ROOT = BASE_DIR / 'media'
+    MEDIA_URL = '/media/'
+else:
+    STORAGES = azure_storages
+    MEDIA_URL = f'https://{AZURE_ACCOUNT_NAME}.blob.core.windows.net/{AZURE_ACCOUNT_CONTAINER}/'
