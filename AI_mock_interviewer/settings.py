@@ -24,10 +24,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 
+ENVIRONMENT = os.getenv("ENVIRONMENT")
 
-
-ALLOWED_HOSTS= ['localhost',"127.0.0.1",'4.188.83.169']
-DJANGO_CSRF_TRUSTED_ORIGINS= ["http://4.188.83.169","https://4.188.83.169"]
+if ENVIRONMENT == 'production':
+    ALLOWED_HOSTS= ['4.188.83.169','mockzen.tech','www.mockzen.tech']
+    DJANGO_CSRF_TRUSTED_ORIGINS= ["http://4.188.83.169","https://4.188.83.169",'https://www.mockzen.tech','http://mockzen.tech']
+else:
+    ALLOWED_HOSTS = []
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
