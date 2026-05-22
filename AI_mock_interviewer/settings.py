@@ -229,10 +229,17 @@ azure_storages = {
 }
 
 # In development prefer local filesystem storage to avoid network latency.
-if DEBUG:
-    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
-    MEDIA_ROOT = BASE_DIR / 'media'
-    MEDIA_URL = '/media/'
-else:
-    STORAGES = azure_storages
-    MEDIA_URL = f'https://{AZURE_ACCOUNT_NAME}.blob.core.windows.net/{AZURE_ACCOUNT_CONTAINER}/'
+# if DEBUG:
+#     DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+#     MEDIA_ROOT = BASE_DIR / 'media'
+#     MEDIA_URL = '/media/'
+# else:
+#     STORAGES = azure_storages
+#     MEDIA_URL = f'https://{AZURE_ACCOUNT_NAME}.blob.core.windows.net/{AZURE_ACCOUNT_CONTAINER}/'
+
+
+STORAGES = azure_storages
+MEDIA_URL = f'https://{AZURE_ACCOUNT_NAME}.blob.core.windows.net/{AZURE_ACCOUNT_CONTAINER}/'
+
+DATA_UPLOAD_MAX_MEMORY_SIZE = 52428800
+FILE_UPLOAD_MAX_MEMORY_SIZE = 52428800
