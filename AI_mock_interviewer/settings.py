@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.google',
 
     'storages',
+    'admin_honeypot',
 ]
 
 MIDDLEWARE = [

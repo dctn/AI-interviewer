@@ -33,6 +33,9 @@ class Transaction(models.Model):
     category = models.CharField(max_length=255, choices=TRANSACTION_CATEGORY_CHOICES)
     transaction_at = models.DateTimeField(auto_now_add=True)
 
+    def __str__(self):
+        return self.user.username
+
 
 class Plan(models.Model):
     plan_id = models.UUIDField(primary_key=True, default=uuid.uuid4)
@@ -58,6 +61,9 @@ class Payment(models.Model):
     is_paid = models.BooleanField(default=False)
     paid_at = models.DateTimeField(auto_now_add=True)
 
+    def __str__(self):
+        return self.user.username
+
 class Vendor(models.Model):
     vendor_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -69,6 +75,8 @@ class Vendor(models.Model):
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def __str__(self):
+        return self.user.username
 
 
 class Coupon(models.Model):
@@ -77,3 +85,7 @@ class Coupon(models.Model):
     claimed_user = models.ForeignKey(User, on_delete=models.CASCADE,null=True, blank=True)
     plan = models.ForeignKey(Plan, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+    def __str__(self):
+        return f"{self.vendor.user.username} - {self.claimed_user.username}"
