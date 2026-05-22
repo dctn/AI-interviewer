@@ -61,6 +61,10 @@ INSTALLED_APPS = [
     'admin_honeypot',
 ]
 
+
+
+SITE_ID = 1
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -196,7 +200,7 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 
-CASHFREE_CLIENT_ID = os.getenv("cashfree_client_id")
+CASHFREE_CLIENT_ID = os.getenv("CASHFREE_CLIENT_ID")
 CASHFREE_CLIENT_SECRET = os.getenv("CASHFREE_CLIENT_SECRET")
 CASHFREE_ENVIRONMENT = os.getenv("CASHFREE_ENV")
 CASHFREE_CALLBACK_URL = "payment_verify"
