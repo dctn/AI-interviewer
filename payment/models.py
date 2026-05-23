@@ -88,4 +88,4 @@ class Coupon(models.Model):
 
 
     def __str__(self):
-        return f"{self.vendor.user.username} - {self.claimed_user.username}"
+        return f"{self.vendor.user.username}"

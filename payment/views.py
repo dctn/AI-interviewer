@@ -3,7 +3,7 @@ import os
 
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse
+from django.http import JsonResponse, Http404
 from django.shortcuts import render, redirect, get_object_or_404
 from django.conf import settings
 from django.urls import reverse
@@ -194,14 +194,14 @@ def payment_success(request, payment_id):
 @login_required
 def vendor_page(request):
     try:
-        vendor = get_object_or_404(Vendor, user=request.user)
+        vendor = get_object_or_404(Vendor, user=request.user,is_active=True)
         coupon_codes = Coupon.objects.filter(vendor=vendor)
 
         context = {
             'coupon_codes': coupon_codes,
         }
         return render(request, "vendor_page.html", context)
-    except Vendor.DoesNotExist:
+    except Http404:
         return redirect('home')
 
 
@@ -272,6 +272,25 @@ def apply_coupon(request):
         coupon.claimed_user = request.user
         wallet.interview_credits += coupon.plan.interview_credits
         wallet.resume_credits += coupon.plan.resume_credits
+
+        if coupon.plan.interview_credits > 0:
+            Transaction.objects.create(
+                user=request.user,
+                credits=coupon.plan.interview_credits,
+                transaction_type='credit',
+                category='interview'
+            )
+
+        if coupon.plan.resume_credits > 0:
+            Transaction.objects.create(
+                user=request.user,
+                credits=coupon.plan.resume_credits,
+                transaction_type='credit',
+                category='resume'
+            )
+
+
+
         wallet.save()
         coupon.save()
         context = {
