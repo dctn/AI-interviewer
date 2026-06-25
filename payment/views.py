@@ -17,6 +17,8 @@ from cashfree_pg.models.create_order_request import CreateOrderRequest
 from cashfree_pg.models.customer_details import CustomerDetails
 from cashfree_pg.models.order_meta import OrderMeta
 
+import razorpay
+
 load_dotenv()
 # Create your views here.
 
@@ -33,143 +35,321 @@ def calculate_total_charge(product_price, cashfree_fee_pct, gst_pct):
     # Adjust final charge so you still receive product_price after fees
     total_charge = product_price / (1 - fee_rate)
 
-    return round(total_charge, 2)
+    return float(round(total_charge, 2))
+
+
+# cashfree codeflow
+@login_required
+# def checkout(request, plan_id):
+#     plan = Plan.objects.get(plan_id=plan_id)
+#
+#     total_amount = calculate_total_charge(product_price=plan.amount, cashfree_fee_pct=0.018, gst_pct=0.18)
+#     env = os.environ.get('ENVIRONMENT')
+#     if env == "production":
+#         env_ = 'production'
+#     else:
+#         env_ = 'sandbox'
+#
+#     context = {
+#         'plan': plan,
+#         'total_amount': total_amount,
+#         'extra_fee': round(total_amount - plan.amount, 2),
+#         'env': env_,
+#     }
+#     return render(request, 'checkout.html', context)
+
+
+# def process_order(request, plan_id):
+#     plan = Plan.objects.get(plan_id=plan_id)
+#     payment = Payment.objects.create(
+#         user=request.user,
+#         plan=plan,
+#         amount_paid=plan.amount,
+#         is_paid=False
+#     )
+#
+#     total_amount = calculate_total_charge(plan.amount, cashfree_fee_pct=0.018, gst_pct=0.18)
+#
+#     if os.environ.get("ENVIRONMENT") == "production":
+#         callback_url = OrderMeta(
+#             return_url=request.build_absolute_uri(
+#                 reverse(settings.CASHFREE_CALLBACK_URL)) + "?order_id={order_id}".replace("http://",
+#                                                                                           "https://")
+#         )
+#     else:
+#         callback_url = OrderMeta(
+#             return_url=request.build_absolute_uri(reverse(settings.CASHFREE_CALLBACK_URL)) + "?order_id={order_id}")
+#
+#     customer = CustomerDetails(
+#         customer_id=f"user_{request.user.username}",
+#         customer_name=request.user.username,
+#         customer_phone='9171000008',
+#         customer_email=request.user.email
+#     )
+#
+#     data = CreateOrderRequest(
+#         order_id=str(payment.payment_id),
+#         order_amount=float(total_amount),  # RUPEES
+#         order_currency="INR",
+#         customer_details=customer,
+#         order_meta=callback_url,
+#     )
+#
+#     response = Cashfree(XEnvironment=Cashfree.XEnvironment).PGCreateOrder(
+#         x_api_version,
+#         data,
+#         None,
+#         None
+#     )
+#
+#     return JsonResponse({"payment_session_id": response.data.payment_session_id})
+
+@login_required
+# def process_order(request, plan_id):
+#     plan = Plan.objects.get(plan_id=plan_id)
+#     payment = Payment.objects.create(
+#         user=request.user,
+#         plan=plan,
+#         amount_paid=plan.amount,
+#         is_paid=False
+#     )
+#
+#     total_amount = calculate_total_charge(plan.amount, cashfree_fee_pct=0.018, gst_pct=0.18)
+#
+#     if os.environ.get("ENVIRONMENT") == "production":
+#         callback_url = OrderMeta(
+#             return_url=request.build_absolute_uri(
+#                 reverse(settings.CASHFREE_CALLBACK_URL)) + "?order_id={order_id}".replace("http://",
+#                                                                                           "https://")
+#         )
+#     else:
+#         callback_url = OrderMeta(
+#             return_url=request.build_absolute_uri(reverse(settings.CASHFREE_CALLBACK_URL)) + "?order_id={order_id}")
+#
+#     customer = CustomerDetails(
+#         customer_id=f"user_{request.user.username}",
+#         customer_name=request.user.username,
+#         customer_phone='9171000008',
+#         customer_email=request.user.email
+#     )
+#
+#     data = CreateOrderRequest(
+#         order_id=str(payment.payment_id),
+#         order_amount=float(total_amount),  # RUPEES
+#         order_currency="INR",
+#         customer_details=customer,
+#         order_meta=callback_url,
+#     )
+#
+#     response = Cashfree(XEnvironment=Cashfree.XEnvironment).PGCreateOrder(
+#         x_api_version,
+#         data,
+#         None,
+#         None
+#     )
+#
+#     return JsonResponse({"payment_session_id": response.data.payment_session_id})
+
+
+@csrf_exempt
+# def payment_verify(request):
+#     cashfree_order_id = request.GET.get("order_id")
+#
+#     # 1️⃣ Validate request
+#     if not cashfree_order_id:
+#         return render(request, "payment_verify.html", {
+#             "status": "Invalid request",
+#             "is_success": False,
+#         })
+#
+#     # 2️⃣ Fetch order
+#     try:
+#         order = Payment.objects.select_related("user", "plan").get(payment_id=cashfree_order_id)
+#     except Payment.DoesNotExist:
+#         return redirect('payment_success', payment_id=cashfree_order_id, )
+#
+#     # 3️⃣ Verify with Cashfree
+#     response = Cashfree(XEnvironment=Cashfree.XEnvironment).PGFetchOrder(
+#         x_api_version,
+#         cashfree_order_id,
+#         None
+#     )
+#
+#     # print("Cashfree Response:", response.data)
+#
+#     if response.data.order_status != "PAID":
+#         return redirect('payment_success', payment_id=cashfree_order_id, )
+#
+#     # 4️⃣ Prevent duplicate crediting
+#     if order.is_paid:
+#         return redirect('payment_success', payment_id=cashfree_order_id, )
+#
+#     # 5️⃣ Atomic transaction (CRITICAL)
+#     with transaction.atomic():
+#
+#         # Lock wallet row
+#         wallet = Wallet.objects.get(user=order.user)
+#
+#         # Mark order paid
+#         order.is_paid = True
+#         order.signature_id = response.data.cf_order_id
+#         order.save()
+#
+#         # Add credits to wallet
+#         wallet.interview_credits += order.plan.interview_credits
+#         wallet.resume_credits += order.plan.resume_credits
+#         wallet.save()
+#
+#         # Log transactions (important for tracking)
+#         Transaction.objects.create(
+#             user=order.user,
+#             credits=order.plan.interview_credits,
+#             transaction_type="credit",
+#             category="interview"
+#         )
+#
+#         Transaction.objects.create(
+#             user=order.user,
+#             credits=order.plan.resume_credits,
+#             transaction_type="credit",
+#             category="resume"
+#         )
+#
+#     # 6️⃣ Success response
+#     return redirect('payment_success', payment_id=cashfree_order_id, )
+
+
+
+# razorpay code
 
 
 @login_required
 def checkout(request, plan_id):
     plan = Plan.objects.get(plan_id=plan_id)
 
-    total_amount = calculate_total_charge(product_price=plan.amount, cashfree_fee_pct=0.018, gst_pct=0.18)
-    env = os.environ.get('ENVIRONMENT')
-    if env == "production":
-        env_ = 'production'
-    else:
-        env_ = 'sandbox'
-
+    total_amount = calculate_total_charge(product_price=plan.amount, cashfree_fee_pct=0.03, gst_pct=0.18)
     context = {
         'plan': plan,
         'total_amount': total_amount,
         'extra_fee': round(total_amount - plan.amount, 2),
-        'env': env_,
     }
     return render(request, 'checkout.html', context)
 
-
+@login_required
 def process_order(request, plan_id):
+    razorpay_client = razorpay.Client(auth=(settings.RAZORPAY_TEST_KEY,settings.RAZORPAY_TEST_SECRET))
+
     plan = Plan.objects.get(plan_id=plan_id)
+
+    total_amount = calculate_total_charge(plan.amount, cashfree_fee_pct=0.03, gst_pct=0.18)
+
     payment = Payment.objects.create(
         user=request.user,
         plan=plan,
-        amount_paid=plan.amount,
-        is_paid=False
+        amount_paid=total_amount,
+        is_paid=False,
     )
-
-    total_amount = calculate_total_charge(plan.amount, cashfree_fee_pct=0.018, gst_pct=0.18)
 
     if os.environ.get("ENVIRONMENT") == "production":
-        callback_url = OrderMeta(
-            return_url=request.build_absolute_uri(
-                reverse(settings.CASHFREE_CALLBACK_URL)) + "?order_id={order_id}".replace("http://",
-                                                                                          "https://")
-        )
+        callback_url =request.build_absolute_uri(
+                reverse(settings.CASHFREE_CALLBACK_URL)) + f"?order_id={payment.payment_id}".replace("http://",
+                                                                    "https://")
     else:
-        callback_url = OrderMeta(
-            return_url=request.build_absolute_uri(reverse(settings.CASHFREE_CALLBACK_URL)) + "?order_id={order_id}")
+        callback_url = request.build_absolute_uri(reverse(settings.CASHFREE_CALLBACK_URL)) + f"?order_id={payment.payment_id}"
 
-    customer = CustomerDetails(
-        customer_id=f"user_{request.user.username}",
-        customer_name=request.user.username,
-        customer_phone='9171000008',
-        customer_email=request.user.email
-    )
+    data = {
+        "amount": float(total_amount * 100),
+        "currency": "INR",
+        "payment_capture": "1",
+        "notes": {
+        "payment_id": str(payment.payment_id),
+        "user_id": str(request.user.id),
+                 },
+    }
+    # print(int(total_amount) * 100)
+    razorpay_order = razorpay_client.order.create(data)
 
-    data = CreateOrderRequest(
-        order_id=str(payment.payment_id),
-        order_amount=float(total_amount),  # RUPEES
-        order_currency="INR",
-        customer_details=customer,
-        order_meta=callback_url,
-    )
+    payment.razorpay_payment_id = razorpay_order["id"]
+    payment.save()
 
-    response = Cashfree(XEnvironment=Cashfree.XEnvironment).PGCreateOrder(
-        x_api_version,
-        data,
-        None,
-        None
-    )
+    response_data = {
+        'razorpay_key_id': settings.RAZORPAY_TEST_KEY,
+        'order_id': razorpay_order["id"],
+        'callback_url': callback_url,
 
-    return JsonResponse({"payment_session_id": response.data.payment_session_id})
+    }
+
+    return JsonResponse(response_data)
 
 
 @csrf_exempt
 def payment_verify(request):
-    cashfree_order_id = request.GET.get("order_id")
 
-    # 1️⃣ Validate request
-    if not cashfree_order_id:
-        return render(request, "payment_verify.html", {
-            "status": "Invalid request",
-            "is_success": False,
-        })
+    if "razorpay_signature" in request.POST:
+        client = razorpay.Client(auth=(settings.RAZORPAY_TEST_KEY,settings.RAZORPAY_TEST_SECRET))
 
-    # 2️⃣ Fetch order
-    try:
-        order = Payment.objects.select_related("user", "plan").get(payment_id=cashfree_order_id)
-    except Payment.DoesNotExist:
-        return redirect('payment_success', payment_id=cashfree_order_id, )
+        order_id = request.POST.get("razorpay_order_id")
+        razorpay_payment_id = request.POST.get("razorpay_payment_id")
+        razorpay_signature  = request.POST.get("razorpay_signature")
+        my_order_id = request.GET.get("order_id")
 
-    # 3️⃣ Verify with Cashfree
-    response = Cashfree(XEnvironment=Cashfree.XEnvironment).PGFetchOrder(
-        x_api_version,
-        cashfree_order_id,
-        None
-    )
+        try:
+            client.utility.verify_payment_signature({
+                "razorpay_order_id": order_id,
+                "razorpay_payment_id": razorpay_payment_id,
+                "razorpay_signature": razorpay_signature,
+            })
 
-    # print("Cashfree Response:", response.data)
+            payment = Payment.objects.get(payment_id=my_order_id,razorpay_payment_id=order_id)
 
-    if response.data.order_status != "PAID":
-        return redirect('payment_success', payment_id=cashfree_order_id, )
+            # Guard against duplicate processing
+            if payment.is_paid:
+                return redirect("payment_success", payment_id=payment.payment_id)
 
-    # 4️⃣ Prevent duplicate crediting
-    if order.is_paid:
-        return redirect('payment_success', payment_id=cashfree_order_id, )
+            with transaction.atomic():
+                # Payment verified successfully
+                payment = Payment.objects.select_for_update().get(pk=payment.pk)
 
-    # 5️⃣ Atomic transaction (CRITICAL)
-    with transaction.atomic():
+                payment.is_paid = True
+                # order.payment_id = razorpay_payment_id
+                payment.signature_id = razorpay_signature
+                payment.is_paid = True
+                payment.save()
 
-        # Lock wallet row
-        wallet = Wallet.objects.get(user=order.user)
+                user_wallet = Wallet.objects.get(user=payment.user)
 
-        # Mark order paid
-        order.is_paid = True
-        order.signature_id = response.data.cf_order_id
-        order.save()
+                user_wallet.resume_credits += payment.plan.resume_credits
+                user_wallet.interview_credits += payment.plan.interview_credits
+                user_wallet.save()
 
-        # Add credits to wallet
-        wallet.interview_credits += order.plan.interview_credits
-        wallet.resume_credits += order.plan.resume_credits
-        wallet.save()
-
-        # Log transactions (important for tracking)
-        Transaction.objects.create(
-            user=order.user,
-            credits=order.plan.interview_credits,
-            transaction_type="credit",
-            category="interview"
-        )
-
-        Transaction.objects.create(
-            user=order.user,
-            credits=order.plan.resume_credits,
-            transaction_type="credit",
-            category="resume"
-        )
-
-    # 6️⃣ Success response
-    return redirect('payment_success', payment_id=cashfree_order_id, )
+                if payment.plan.interview_credits > 0:
+                    Transaction.objects.create(
+                        user=payment.user,
+                        credits=payment.plan.interview_credits,
+                        transaction_type="credit",
+                        category="interview"
+                    )
+                if payment.plan.resume_credits > 0:
+                    Transaction.objects.create(
+                        user=payment.user,
+                        credits=payment.plan.resume_credits,
+                        transaction_type="credit",
+                        category="resume"
+                        )
 
 
+                return redirect('payment_success',payment_id=payment.payment_id)
+            # return redirect("confirm_order",order_id)
+        except razorpay.errors.SignatureVerificationError:
+
+            return render(request,"payment_verify.html",{"status":"Payment verification failed"})
+
+
+    return render(request,"payment_verify.html",{"status":"Invalid Request"})
+
+
+
+@login_required
 def payment_success(request, payment_id):
     payment = Payment.objects.get(payment_id=payment_id)
     user_wallet = Wallet.objects.get(user=request.user)

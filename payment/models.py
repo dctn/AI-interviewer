@@ -57,6 +57,7 @@ class Payment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     amount_paid = models.PositiveIntegerField(default=0)
     signature_id = models.CharField(max_length=255, default="")
+    razorpay_payment_id = models.CharField(max_length=255, default="")
     plan = models.ForeignKey(Plan, on_delete=models.SET_NULL,null=True)
     is_paid = models.BooleanField(default=False)
     paid_at = models.DateTimeField(auto_now_add=True)

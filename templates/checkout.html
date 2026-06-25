@@ -235,61 +235,111 @@
     </div>
 </footer>
 
-    <script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
+    {#    cashfree code#}
+{#-------------------------------------------------------------------#}
+{#    <script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>#}
+{#    <script>#}
+{##}
+{##}
+{#        const cashfree = Cashfree({mode: "{{ env }}"});#}
+{##}
+{#        document.getElementById("rzp-button1").addEventListener("click", async () => {#}
+{##}
+{#            handlePay()#}
+{##}
+{#            const res = await fetch("{% url 'process_order' plan.plan_id  %}", {#}
+{#                method: "POST",#}
+{#                headers: {"X-CSRFToken": "{{ csrf_token }}"}#}
+{#            });#}
+{##}
+{#            const data = await res.json();#}
+{##}
+{#            cashfree.checkout({#}
+{#                paymentSessionId: data.payment_session_id,#}
+{#                redirectTarget: "_self"#}
+{#            });#}
+{#        });#}
+{##}
+{##}
+{##}
+{#    function selectMethod(el) {#}
+{#        document.querySelectorAll('.method-option').forEach(o => o.classList.remove('active'));#}
+{#        el.classList.add('active');#}
+{#    }#}
+{##}
+{#    function applyCoupon() {#}
+{#        const code = document.getElementById('couponInput').value.trim().toUpperCase();#}
+{#        const discountEl = document.getElementById('discountVal');#}
+{#        const totalEl = document.getElementById('totalVal');#}
+{##}
+{#        if (code === 'otha123' || code === 'ommala69') {#}
+{#            discountEl.textContent = '-₹30';#}
+{#            totalEl.textContent = '₹269';#}
+{#            document.querySelector('.btn-pay').textContent = '';#}
+{#            document.querySelector('.btn-pay').innerHTML = 'Pay ₹269 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>';#}
+{#            document.getElementById('couponInput').style.borderColor = 'rgba(52,211,153,0.5)';#}
+{#        } else if (code) {#}
+{#            document.getElementById('couponInput').style.borderColor = 'rgba(248,113,113,0.5)';#}
+{#        }#}
+{#    }#}
+{##}
+{#    function handlePay() {#}
+{#        const btn = document.querySelector('.btn-pay');#}
+{#        btn.style.opacity = '0.7';#}
+{#        btn.innerHTML = 'Processing…';#}
+{#        setTimeout(() => {#}
+{#            btn.style.opacity = '1';#}
+{#            btn.innerHTML = 'Pay ₹299 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>';#}
+{#        }, 2000);#}
+{#    }#}
+{#</script>#}
+{#-------------------------------------------------------------------#}
+
+
+
+    {#    razorpay code#}
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
 <script>
+    document.getElementById("rzp-button1").addEventListener("click", async function (e) {
+        e.preventDefault();
 
-
-        const cashfree = Cashfree({mode: "{{ env }}"});
-
-        document.getElementById("rzp-button1").addEventListener("click", async () => {
-
-            handlePay()
-
-            const res = await fetch("{% url 'process_order' plan.plan_id  %}", {
-                method: "POST",
-                headers: {"X-CSRFToken": "{{ csrf_token }}"}
-            });
-
-            const data = await res.json();
-
-            cashfree.checkout({
-                paymentSessionId: data.payment_session_id,
-                redirectTarget: "_self"
-            });
+        let response = await fetch("{% url 'process_order' plan.plan_id %}", {
+            method: "POST",
+            headers: {
+                "X-CSRFToken": "{{ csrf_token }}", // Only if CSRF is required
+                "Content-Type": "application/json"
+            }
         });
 
+        let data = await response.json();
 
+        var options = {
+            "key": data.razorpay_key_id,
+            "amount": data.amount,
+            "currency": "INR",
+            "name": "Mockzen",
+            "description": "Transaction",
+            "image": "https://example.com/your_logo",
+            "order_id": data.order_id,
+            "callback_url": data.callback_url,
+            "notes": {
+                "address": "Razorpay Corporate Office"
+            },
+            "theme": {
+                "color": "#3399cc"
+            }
+        };
 
-    function selectMethod(el) {
-        document.querySelectorAll('.method-option').forEach(o => o.classList.remove('active'));
-        el.classList.add('active');
-    }
+        var rzp1 = new Razorpay(options);
 
-    function applyCoupon() {
-        const code = document.getElementById('couponInput').value.trim().toUpperCase();
-        const discountEl = document.getElementById('discountVal');
-        const totalEl = document.getElementById('totalVal');
+        rzp1.on('payment.failed', function (response) {
+            alert("Payment failed: " + response.error.description);
+        });
 
-        if (code === 'otha123' || code === 'ommala69') {
-            discountEl.textContent = '-₹30';
-            totalEl.textContent = '₹269';
-            document.querySelector('.btn-pay').textContent = '';
-            document.querySelector('.btn-pay').innerHTML = 'Pay ₹269 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>';
-            document.getElementById('couponInput').style.borderColor = 'rgba(52,211,153,0.5)';
-        } else if (code) {
-            document.getElementById('couponInput').style.borderColor = 'rgba(248,113,113,0.5)';
-        }
-    }
-
-    function handlePay() {
-        const btn = document.querySelector('.btn-pay');
-        btn.style.opacity = '0.7';
-        btn.innerHTML = 'Processing…';
-        setTimeout(() => {
-            btn.style.opacity = '1';
-            btn.innerHTML = 'Pay ₹299 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>';
-        }, 2000);
-    }
+        rzp1.open();
+    });
 </script>
 
 </body>
