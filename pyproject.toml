@@ -12,6 +12,7 @@ dependencies = [
     "django-allauth[socialaccount]>=65.16.1",
     "django-storages>=1.14.6",
     "groq>=0.37.1",
+    "gunicorn>=26.0.0",
     "langchain-community>=0.4.1",
     "langchain-groq>=1.1.2",
     "langchain-huggingface>=1.2.2",
